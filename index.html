@@ -89,46 +89,69 @@
             color: #ff4500;
         }
         #parkMap {
-            width: 100%;
-            max-width: 800px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-            justify-content: center;
+            position: relative;
+            width: 800px;
+            height: 600px;
+            background: #e0e0e0;
+            border: 4px solid #666;
+            border-radius: 10px;
+            overflow: hidden;
+            background-image: linear-gradient(to bottom, #87ceeb, #98fb98); /* Simple park-like gradient */
         }
         .zone {
-            width: 350px;
-            height: 200px;
-            background: #fff;
-            border: 2px solid #666;
+            position: absolute;
+            border: 2px dashed #333;
             border-radius: 10px;
             padding: 10px;
             cursor: pointer;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
             transition: transform 0.2s, box-shadow 0.2s;
-            position: relative;
-            overflow: hidden;
+            background: rgba(255, 255, 255, 0.5);
         }
         .zone:hover {
             transform: scale(1.05);
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
         }
-        #thrillZone { background: rgba(255, 99, 71, 0.2); }
-        #familyZone { background: rgba(144, 238, 144, 0.2); }
-        #foodZone { background: rgba(255, 182, 193, 0.2); }
-        #accessZone { background: rgba(135, 206, 235, 0.2); }
+        #thrillZone {
+            top: 10px;
+            left: 10px;
+            width: 380px;
+            height: 280px;
+            background: rgba(255, 99, 71, 0.3);
+        }
+        #familyZone {
+            top: 10px;
+            right: 10px;
+            width: 380px;
+            height: 280px;
+            background: rgba(144, 238, 144, 0.3);
+        }
+        #foodZone {
+            bottom: 10px;
+            left: 10px;
+            width: 380px;
+            height: 280px;
+            background: rgba(255, 182, 193, 0.3);
+        }
+        #accessZone {
+            bottom: 10px;
+            right: 10px;
+            width: 380px;
+            height: 280px;
+            background: rgba(135, 206, 235, 0.3);
+        }
         .zone h3 {
             margin: 0 0 10px;
             color: #ff4500;
             font-family: 'Amatic SC', cursive;
             font-size: 24px;
+            text-shadow: 1px 1px 2px #fff;
         }
         .zone-items {
             display: flex;
             flex-wrap: wrap;
-            gap: 5px;
+            gap: 10px;
             font-size: 24px;
-            max-height: 150px;
+            max-height: 230px;
             overflow-y: auto;
         }
         .zone-item {
@@ -219,7 +242,7 @@
             text-align: left;
             position: relative;
         }
-        #modal-content h2 {
+        #modal-content h3 {
             margin: 0 0 10px;
             color: #ff4500;
             font-family: 'Amatic SC', cursive;
@@ -326,7 +349,7 @@
     <div id="modal">
         <div id="modal-content">
             <button id="modal-close">X</button>
-            <h2 id="modal-title"></h2>
+            <h3 id="modal-title"></h3>
             <div id="modal-body"></div>
         </div>
     </div>
@@ -546,7 +569,7 @@
             showModal('Loan Taken', `You borrowed $${loan.amount}.\nTotal repayment: $${totalRepayment}\nDaily repayment: $${dailyRepayment} for ${loan.term} days.`);
         }
 
-        // Initialize the park map
+        // Update the park map
         function updateMap() {
             const zones = ['thrillZone', 'familyZone', 'foodZone', 'accessZone'];
             zones.forEach(zoneId => {
@@ -569,7 +592,7 @@
             const zone = event.target.closest('.zone');
             if (zone) {
                 if (selectedZone) {
-                    selectedZone.style.backgroundColor = '';
+                    selectedZone.style.backgroundColor = zone.id === selectedZone.id ? 'rgba(255, 255, 0, 0.7)' : '';
                 }
                 selectedZone = zone;
                 zone.style.backgroundColor = 'rgba(255, 255, 0, 0.7)';
@@ -619,8 +642,6 @@
             game.money -= attractionTypes[type].cost;
 
             updateMap();
-            selectedZone.style.backgroundColor = '';
-            selectedZone = null;
             document.getElementById('money').textContent = Math.floor(game.money);
         }
 
