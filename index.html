@@ -219,7 +219,7 @@
             reputation: 50,
             attractions: [],
             date: new Date('2025-03-29'),
-            ads: [] // Track active ads with duration
+            ads: []
         };
 
         // Attraction definitions
@@ -345,18 +345,21 @@
             let bonus = { ...baseStats };
             let zone = '';
             let bonusDesc = 'None';
+            let hasBonus = false;
 
             if (row < 5 && col < 5) { // Thrill Zone
                 zone = 'Thrill Zone';
                 if (['rollercoaster', 'waterride', 'droptower'].includes(type)) {
                     bonus.incomePerVisitor *= 1.5;
                     bonusDesc = 'Income +50%';
+                    hasBonus = true;
                 }
             } else if (row < 5 && col >= 5) { // Family Zone
                 zone = 'Family Zone';
                 if (['ferriswheel', 'carousel'].includes(type)) {
                     bonus.capacity *= 1.5;
                     bonusDesc = 'Capacity +50%';
+                    hasBonus = true;
                 }
             } else if (row >= 5 && col < 5) { // Food Zone
                 zone = 'Food Zone';
@@ -364,15 +367,17 @@
                     bonus.incomePerVisitor *= 1.25;
                     bonus.capacity *= 1.25;
                     bonusDesc = 'Income +25%, Capacity +25%';
+                    hasBonus = true;
                 }
             } else if (row >= 5 && col >= 5) { // Access Zone
                 zone = 'Access Zone';
                 if (['busstation', 'trainstation', 'parkinglot'].includes(type)) {
                     bonus.accessibilityBoost *= 1.2;
                     bonusDesc = 'Accessibility +20%';
+                    hasBonus = true;
                 }
             }
-            return { stats: bonus, zone, bonusDesc };
+            return { stats: bonus, zone, bonusDesc, hasBonus };
         }
 
         // Grid to track occupied cells
@@ -391,6 +396,10 @@
                     cell.id = `cell-${i}-${j}`;
                     cell.style.width = '50px';
                     cell.style.height = '50px';
+                    if (grid[i][j]) {
+                        let bonusInfo = applyZoneBonus(grid[i][j]);
+                        cell.textContent = getColor(grid[i][j].type) + (bonusInfo.hasBonus ? '★' : '');
+                    }
                 }
             }
         }
@@ -463,7 +472,8 @@
             game.money -= attractionTypes[type].cost;
 
             let cell = document.getElementById(`cell-${selectedCell.row}-${selectedCell.col}`);
-            cell.textContent = getColor(type);
+            let bonusInfo = applyZoneBonus(attraction);
+            cell.textContent = getColor(type) + (bonusInfo.hasBonus ? '★' : '');
             cell.style.backgroundColor = '';
             cell.style.transform = 'scale(1.1)';
             setTimeout(() => cell.style.transform = 'scale(1)', 200);
@@ -541,7 +551,7 @@
 
         // Apply upgrade
         function applyUpgrade(type, upgrade) {
-            if (!selectedAttraction || selectedAttraction.type !== type) {
+            if (!selectedCell || !selectedAttraction || selectedAttraction.type !== type) {
                 alert("Select the correct attraction first!");
                 return;
             }
@@ -554,6 +564,9 @@
             selectedAttraction.upgrades[upgrade] = true;
             selectedAttraction.upgradedStats = upgrades[type][upgrade].effect(selectedAttraction.upgradedStats || attractionTypes[type]);
             document.getElementById('money').textContent = Math.floor(game.money);
+            let cell = document.getElementById(`cell-${selectedCell.row}-${selectedCell.col}`);
+            let bonusInfo = applyZoneBonus(selectedAttraction);
+            cell.textContent = getColor(type) + (bonusInfo.hasBonus ? '★' : '');
             updateUpgrades();
             let label = upgrade === 'thrill' ? 'Thrill Upgrade' :
                         upgrade === 'capacity' ? 'Capacity Upgrade' :
