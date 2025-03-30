@@ -11,9 +11,9 @@
             min-height: 100vh;
             display: flex;
             justify-content: center;
-            align-items: flex-start; /* Start from top to avoid squashing */
+            align-items: flex-start;
             font-family: 'Arial', sans-serif;
-            padding-top: 20px; /* Add breathing room at top */
+            padding-top: 20px;
         }
         #game {
             background: rgba(255, 255, 255, 0.95);
@@ -23,11 +23,10 @@
             max-width: 900px;
             width: 100%;
             text-align: center;
-            position: relative; /* Ensure children respect this container */
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 20px; /* Space between flex children */
+            gap: 20px;
         }
         #header {
             font-family: 'Amatic SC', cursive;
@@ -89,34 +88,57 @@
             font-weight: bold;
             color: #ff4500;
         }
-        #parkGrid {
-            border-collapse: separate;
-            border-spacing: 5px;
-            width: 560px;
-            height: 560px;
-            display: block;
-            margin: 20px auto; /* Ensure clearance above and below */
+        #parkMap {
+            width: 100%;
+            max-width: 800px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
         }
-        #parkGrid td {
-            width: 50px;
-            height: 50px;
+        .zone {
+            width: 350px;
+            height: 200px;
             background: #fff;
             border: 2px solid #666;
             border-radius: 10px;
+            padding: 10px;
             cursor: pointer;
-            text-align: center;
-            font-size: 24px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
             transition: transform 0.2s, box-shadow 0.2s;
+            position: relative;
+            overflow: hidden;
         }
-        #parkGrid td:hover {
-            transform: scale(1.1);
+        .zone:hover {
+            transform: scale(1.05);
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
         }
-        #parkGrid tr:nth-child(-n+5) td:nth-child(-n+5) { background: rgba(255, 99, 71, 0.2); } /* Thrill Zone */
-        #parkGrid tr:nth-child(-n+5) td:nth-child(n+6) { background: rgba(144, 238, 144, 0.2); } /* Family Zone */
-        #parkGrid tr:nth-child(n+6) td:nth-child(-n+5) { background: rgba(255, 182, 193, 0.2); } /* Food Zone */
-        #parkGrid tr:nth-child(n+6) td:nth-child(n+6) { background: rgba(135, 206, 235, 0.2); } /* Access Zone */
+        #thrillZone { background: rgba(255, 99, 71, 0.2); }
+        #familyZone { background: rgba(144, 238, 144, 0.2); }
+        #foodZone { background: rgba(255, 182, 193, 0.2); }
+        #accessZone { background: rgba(135, 206, 235, 0.2); }
+        .zone h3 {
+            margin: 0 0 10px;
+            color: #ff4500;
+            font-family: 'Amatic SC', cursive;
+            font-size: 24px;
+        }
+        .zone-items {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            font-size: 24px;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+        .zone-item {
+            cursor: pointer;
+            padding: 2px 5px;
+            border-radius: 5px;
+        }
+        .zone-item:hover {
+            background: rgba(255, 255, 0, 0.7);
+        }
         #menu, #advertise, #upgrades {
             display: flex;
             flex-wrap: wrap;
@@ -126,7 +148,7 @@
             border-radius: 10px;
             width: 100%;
             max-width: 800px;
-            margin-top: 20px; /* Extra spacing from grid */
+            margin-top: 20px;
         }
         #menu > div {
             background: rgba(240, 248, 255, 0.8);
@@ -245,7 +267,24 @@
             <p>😊 Satisfaction: <span id="satisfaction">50</span>%</p>
             <p>⭐ Reputation: <span id="reputation">50</span></p>
         </div>
-        <table id="parkGrid"></table>
+        <div id="parkMap">
+            <div id="thrillZone" class="zone">
+                <h3>Thrill Zone</h3>
+                <div class="zone-items"></div>
+            </div>
+            <div id="familyZone" class="zone">
+                <h3>Family Zone</h3>
+                <div class="zone-items"></div>
+            </div>
+            <div id="foodZone" class="zone">
+                <h3>Food Zone</h3>
+                <div class="zone-items"></div>
+            </div>
+            <div id="accessZone" class="zone">
+                <h3>Access Zone</h3>
+                <div class="zone-items"></div>
+            </div>
+        </div>
         <div id="menu">
             <div>
                 <h3>Rides</h3>
@@ -429,51 +468,38 @@
 
         // Zone bonuses and details
         function applyZoneBonus(attraction) {
-            let { row, col } = attraction.position;
+            let zone = attraction.zone;
             let type = attraction.type;
             let baseStats = attraction.upgradedStats || attractionTypes[type];
             let bonus = { ...baseStats };
-            let zone = '';
             let bonusDesc = 'None';
             let hasBonus = false;
 
-            if (row < 5 && col < 5) { // Thrill Zone
-                zone = 'Thrill Zone';
-                if (['rollercoaster', 'waterride', 'droptower'].includes(type)) {
-                    bonus.incomePerVisitor *= 1.5;
-                    bonusDesc = 'Income +50%';
-                    hasBonus = true;
-                }
-            } else if (row < 5 && col >= 5) { // Family Zone
-                zone = 'Family Zone';
-                if (['ferriswheel', 'carousel'].includes(type)) {
-                    bonus.capacity *= 1.5;
-                    bonusDesc = 'Capacity +50%';
-                    hasBonus = true;
-                }
-            } else if (row >= 5 && col < 5) { // Food Zone
-                zone = 'Food Zone';
-                if (['foodstall', 'restaurant', 'souvenir'].includes(type)) {
-                    bonus.incomePerVisitor *= 1.25;
-                    bonus.capacity *= 1.25;
-                    bonusDesc = 'Income +25%, Capacity +25%';
-                    hasBonus = true;
-                }
-            } else if (row >= 5 && col >= 5) { // Access Zone
-                zone = 'Access Zone';
-                if (['busstation', 'trainstation', 'parkinglot'].includes(type)) {
-                    bonus.accessibilityBoost *= 1.2;
-                    bonusDesc = 'Accessibility +20%';
-                    hasBonus = true;
-                }
+            if (zone === 'thrillZone' && ['rollercoaster', 'waterride', 'droptower'].includes(type)) {
+                bonus.incomePerVisitor *= 1.5;
+                bonusDesc = 'Income +50%';
+                hasBonus = true;
+            } else if (zone === 'familyZone' && ['ferriswheel', 'carousel'].includes(type)) {
+                bonus.capacity *= 1.5;
+                bonusDesc = 'Capacity +50%';
+                hasBonus = true;
+            } else if (zone === 'foodZone' && ['foodstall', 'restaurant', 'souvenir'].includes(type)) {
+                bonus.incomePerVisitor *= 1.25;
+                bonus.capacity *= 1.25;
+                bonusDesc = 'Income +25%, Capacity +25%';
+                hasBonus = true;
+            } else if (zone === 'accessZone' && ['busstation', 'trainstation', 'parkinglot'].includes(type)) {
+                bonus.accessibilityBoost *= 1.2;
+                bonusDesc = 'Accessibility +20%';
+                hasBonus = true;
             }
-            return { stats: bonus, zone, bonusDesc, hasBonus };
+            return { stats: bonus, zone: zone.charAt(0).toUpperCase() + zone.slice(1, -4) + ' Zone', bonusDesc, hasBonus };
         }
 
-        // Grid to track occupied cells
-        let grid = Array(10).fill().map(() => Array(10).fill(null));
-        let selectedCell = null;
+        // Map state
+        let selectedZone = null;
         let selectedAttraction = null;
+        const zoneCapacity = 5; // Max items per zone
 
         // Modal functions
         function showModal(title, content, buttons = []) {
@@ -520,70 +546,67 @@
             showModal('Loan Taken', `You borrowed $${loan.amount}.\nTotal repayment: $${totalRepayment}\nDaily repayment: $${dailyRepayment} for ${loan.term} days.`);
         }
 
-        // Initialize the park grid
-        function initializeGrid() {
-            let parkGrid = document.getElementById('parkGrid');
-            parkGrid.innerHTML = '';
-            for (let i = 0; i < 10; i++) {
-                let row = parkGrid.insertRow();
-                for (let j = 0; j < 10; j++) {
-                    let cell = row.insertCell();
-                    cell.id = `cell-${i}-${j}`;
-                    cell.style.width = '50px';
-                    cell.style.height = '50px';
-                    if (grid[i][j]) {
-                        let bonusInfo = applyZoneBonus(grid[i][j]);
-                        cell.textContent = getColor(grid[i][j].type) + (bonusInfo.hasBonus ? '★' : '');
-                    }
-                }
-            }
+        // Initialize the park map
+        function updateMap() {
+            const zones = ['thrillZone', 'familyZone', 'foodZone', 'accessZone'];
+            zones.forEach(zoneId => {
+                const zoneDiv = document.getElementById(zoneId).querySelector('.zone-items');
+                zoneDiv.innerHTML = '';
+                const zoneAttractions = game.attractions.filter(a => a.zone === zoneId);
+                zoneAttractions.forEach((attraction, index) => {
+                    const item = document.createElement('span');
+                    item.className = 'zone-item';
+                    item.dataset.index = index;
+                    const bonusInfo = applyZoneBonus(attraction);
+                    item.textContent = getColor(attraction.type) + (bonusInfo.hasBonus ? '★' : '');
+                    zoneDiv.appendChild(item);
+                });
+            });
         }
 
-        // Call grid initialization immediately
-        initializeGrid();
-
-        // Cell selection with details in modal
-        document.getElementById('parkGrid').addEventListener('click', function(event) {
-            if (event.target.tagName === 'TD') {
-                let row = event.target.parentNode.rowIndex;
-                let col = event.target.cellIndex;
-                if (selectedCell) {
-                    let prevCell = document.getElementById(`cell-${selectedCell.row}-${selectedCell.col}`);
-                    prevCell.style.backgroundColor = '';
-                    if (!grid[selectedCell.row][selectedCell.col]) {
-                        prevCell.textContent = '';
-                    }
+        // Zone selection
+        document.getElementById('parkMap').addEventListener('click', function(event) {
+            const zone = event.target.closest('.zone');
+            if (zone) {
+                if (selectedZone) {
+                    selectedZone.style.backgroundColor = '';
                 }
-                selectedCell = { row, col };
-                selectedAttraction = grid[row][col];
-                event.target.style.backgroundColor = 'rgba(255, 255, 0, 0.7)';
-                updateUpgrades();
-
-                if (selectedAttraction) {
-                    let stats = applyZoneBonus(selectedAttraction).stats;
-                    let zone = applyZoneBonus(selectedAttraction).zone;
-                    let bonusDesc = applyZoneBonus(selectedAttraction).bonusDesc;
-                    let details = `Item: ${selectedAttraction.type}\n` +
-                                  `Zone: ${zone}\n` +
-                                  `Bonus: ${bonusDesc}\n` +
-                                  `Income per Visitor: $${stats.incomePerVisitor.toFixed(2)}\n` +
-                                  `Maintenance: $${stats.maintenance}\n` +
-                                  `Capacity: ${Math.floor(stats.capacity)}\n` +
-                                  `Accessibility Boost: ${stats.accessibilityBoost.toFixed(2)}x\n` +
-                                  `Satisfaction Bonus: ${stats.satisfactionBonus || 0}%`;
+                selectedZone = zone;
+                zone.style.backgroundColor = 'rgba(255, 255, 0, 0.7)';
+                const zoneItems = zone.querySelector('.zone-items');
+                if (event.target.className === 'zone-item') {
+                    const index = parseInt(event.target.dataset.index);
+                    selectedAttraction = game.attractions.filter(a => a.zone === zone.id)[index];
+                    updateUpgrades();
+                    const stats = applyZoneBonus(selectedAttraction).stats;
+                    const zoneName = applyZoneBonus(selectedAttraction).zone;
+                    const bonusDesc = applyZoneBonus(selectedAttraction).bonusDesc;
+                    const details = `Item: ${selectedAttraction.type}\n` +
+                                    `Zone: ${zoneName}\n` +
+                                    `Bonus: ${bonusDesc}\n` +
+                                    `Income per Visitor: $${stats.incomePerVisitor.toFixed(2)}\n` +
+                                    `Maintenance: $${stats.maintenance}\n` +
+                                    `Capacity: ${Math.floor(stats.capacity)}\n` +
+                                    `Accessibility Boost: ${stats.accessibilityBoost.toFixed(2)}x\n` +
+                                    `Satisfaction Bonus: ${stats.satisfactionBonus || 0}%`;
                     showModal('Item Details', details);
+                } else {
+                    selectedAttraction = null;
+                    updateUpgrades();
                 }
             }
         });
 
-        // Build an attraction or transportation
+        // Build an attraction
         function build(type) {
-            if (!selectedCell) {
-                showModal('Error', 'Please select a cell first!');
+            if (!selectedZone) {
+                showModal('Error', 'Please select a zone first!');
                 return;
             }
-            if (grid[selectedCell.row][selectedCell.col]) {
-                showModal('Error', 'This cell is already occupied!');
+            const zoneId = selectedZone.id;
+            const zoneAttractions = game.attractions.filter(a => a.zone === zoneId);
+            if (zoneAttractions.length >= zoneCapacity) {
+                showModal('Error', `The ${zoneId.slice(0, -4)} Zone is full (max ${zoneCapacity} items)!`);
                 return;
             }
             if (game.money < attractionTypes[type].cost) {
@@ -591,51 +614,34 @@
                 return;
             }
 
-            const transportTypes = ['busstation', 'trainstation', 'parkinglot'];
-            if (transportTypes.includes(type)) {
-                let { row, col } = selectedCell;
-                if (row !== 0 && row !== 9 && col !== 0 && col !== 9) {
-                    showModal('Error', 'Transportation can only be placed on the outer layer of the grid!');
-                    return;
-                }
-            }
-
-            let attraction = { type: type, position: { row: selectedCell.row, col: selectedCell.col }, upgrades: {} };
+            const attraction = { type, zone: zoneId, upgrades: {} };
             game.attractions.push(attraction);
-            grid[selectedCell.row][selectedCell.col] = attraction;
             game.money -= attractionTypes[type].cost;
 
-            let cell = document.getElementById(`cell-${selectedCell.row}-${selectedCell.col}`);
-            let bonusInfo = applyZoneBonus(attraction);
-            cell.textContent = getColor(type) + (bonusInfo.hasBonus ? '★' : '');
-            cell.style.backgroundColor = '';
-            cell.style.transform = 'scale(1.1)';
-            setTimeout(() => cell.style.transform = 'scale(1)', 200);
+            updateMap();
+            selectedZone.style.backgroundColor = '';
+            selectedZone = null;
             document.getElementById('money').textContent = Math.floor(game.money);
-            selectedCell = null;
         }
 
         // Cancel an item
         function cancelItem() {
-            if (!selectedCell || !selectedAttraction) {
+            if (!selectedAttraction) {
                 showModal('Error', 'Please select an item to cancel!');
                 return;
             }
 
-            let type = selectedAttraction.type;
-            let refund = Math.floor(attractionTypes[type].cost * 0.7);
+            const type = selectedAttraction.type;
+            const refund = Math.floor(attractionTypes[type].cost * 0.7);
             game.money += refund;
 
             game.attractions = game.attractions.filter(a => a !== selectedAttraction);
-            grid[selectedCell.row][selectedCell.col] = null;
-
-            let cell = document.getElementById(`cell-${selectedCell.row}-${selectedCell.col}`);
-            cell.textContent = '';
-            cell.style.backgroundColor = '';
+            updateMap();
+            if (selectedZone) selectedZone.style.backgroundColor = '';
             document.getElementById('money').textContent = Math.floor(game.money);
 
             showModal('Cancellation', `Cancelled ${type}. Refunded $${refund}.`);
-            selectedCell = null;
+            selectedZone = null;
             selectedAttraction = null;
             updateUpgrades();
         }
@@ -683,7 +689,7 @@
 
         // Apply upgrade
         function applyUpgrade(type, upgrade) {
-            if (!selectedCell || !selectedAttraction || selectedAttraction.type !== type) {
+            if (!selectedAttraction || selectedAttraction.type !== type) {
                 showModal('Error', 'Select the correct attraction first!');
                 return;
             }
@@ -696,9 +702,7 @@
             selectedAttraction.upgrades[upgrade] = true;
             selectedAttraction.upgradedStats = upgrades[type][upgrade].effect(selectedAttraction.upgradedStats || attractionTypes[type]);
             document.getElementById('money').textContent = Math.floor(game.money);
-            let cell = document.getElementById(`cell-${selectedCell.row}-${selectedCell.col}`);
-            let bonusInfo = applyZoneBonus(selectedAttraction);
-            cell.textContent = getColor(type) + (bonusInfo.hasBonus ? '★' : '');
+            updateMap();
             updateUpgrades();
             let label = upgrade === 'thrill' ? 'Thrill Upgrade' :
                         upgrade === 'capacity' ? 'Capacity Upgrade' :
@@ -784,8 +788,9 @@
             showModal('Day Summary', summary);
         });
 
-        // Initial date display
+        // Initial date display and map setup
         document.getElementById('date').textContent = formatDate(game.date);
+        updateMap();
     </script>
 </body>
 </html>
