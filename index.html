@@ -301,7 +301,8 @@
             attractions: [],
             date: new Date('2025-03-29'),
             ads: [],
-            loans: []
+            loans: [],
+            gameOver: false
         };
 
         const attractionTypes = {
@@ -317,7 +318,7 @@
             trainstation: { cost: 3500, maintenance: 75, incomePerVisitor: 0, capacity: 0, accessibilityBoost: 1.5 },
             parkinglot: { cost: 2000, maintenance: 40, incomePerVisitor: 0, capacity: 0, accessibilityBoost: 1.3 },
             restrooms: { cost: 800, maintenance: 15, incomePerVisitor: 0, capacity: 0, accessibilityBoost: 1, satisfactionBonus: 2 },
-            firstaid: { cost: 1200, maintenance: 25, income tonnagePerVisitor: 0, capacity: 0, accessibilityBoost: 1, satisfactionBonus: 3 },
+            firstaid: { cost: 1200, maintenance: 25, incomePerVisitor: 0, capacity: 0, accessibilityBoost: 1, satisfactionBonus: 3 },
             benches: { cost: 500, maintenance: 10, incomePerVisitor: 0, capacity: 0, accessibilityBoost: 1, satisfactionBonus: 1 },
             path: { cost: 200, maintenance: 5, incomePerVisitor: 0, capacity: 0, accessibilityBoost: 1.1, satisfactionBonus: 1 }
         };
@@ -345,7 +346,7 @@
             },
             foodstall: {
                 menu: { cost: 800, effect: (stats) => ({ ...stats, incomePerVisitor: stats.incomePerVisitor * 1.5 }) },
-                seating: { cost: 1000,-W effect: (stats) => ({ ...stats, capacity: stats.capacity * 1.5 }) }
+                seating: { cost: 1000, effect: (stats) => ({ ...stats, capacity: stats.capacity * 1.5 }) }
             },
             restaurant: {
                 menu: { cost: 2500, effect: (stats) => ({ ...stats, incomePerVisitor: stats.incomePerVisitor * 1.5 }) },
@@ -381,14 +382,13 @@
             large: { amount: 20000, interest: 0.10, term: 5 }
         };
 
-        // Random events definition
         const randomEvents = [
             {
                 name: "Rainy Day",
-                chance: 0.2, // 20% chance
+                chance: 0.2,
                 effect: (gameState) => {
-                    let visitorImpact = Math.floor(gameState.visitors * 0.3); // 30% fewer visitors
-                    let incomeImpact = gameState.income * 0.7; // 30% less income
+                    let visitorImpact = Math.floor(gameState.visitors * 0.3);
+                    let incomeImpact = gameState.income * 0.7;
                     return {
                         visitors: -visitorImpact,
                         income: incomeImpact - gameState.income,
@@ -398,10 +398,10 @@
             },
             {
                 name: "Sunny Day",
-                chance: 0.25, // 25% chance
+                chance: 0.25,
                 effect: (gameState) => {
-                    let visitorBoost = Math.floor(gameState.visitors * 0.2); // 20% more visitors
-                    let incomeBoost = gameState.income * 1.2; // 20% more income
+                    let visitorBoost = Math.floor(gameState.visitors * 0.2);
+                    let incomeBoost = gameState.income * 1.2;
                     return {
                         visitors: visitorBoost,
                         income: incomeBoost - gameState.income,
@@ -411,10 +411,10 @@
             },
             {
                 name: "Local Festival",
-                chance: 0.15, // 15% chance
+                chance: 0.15,
                 effect: (gameState) => {
-                    let visitorBoost = Math.floor(gameState.visitors * 0.5); // 50% more visitors
-                    let incomeBoost = gameState.income * 1.3; // 30% more income
+                    let visitorBoost = Math.floor(gameState.visitors * 0.5);
+                    let incomeBoost = gameState.income * 1.3;
                     return {
                         visitors: visitorBoost,
                         income: incomeBoost - gameState.income,
@@ -424,10 +424,10 @@
             },
             {
                 name: "Ride Breakdown",
-                chance: 0.1, // 10% chance
+                chance: 0.1,
                 effect: (gameState) => {
                     let repairCost = 1000;
-                    let incomeLoss = gameState.income * 0.8; // 20% less income
+                    let incomeLoss = gameState.income * 0.8;
                     return {
                         money: -repairCost,
                         income: incomeLoss - gameState.income,
@@ -437,10 +437,10 @@
             },
             {
                 name: "Celebrity Visit",
-                chance: 0.05, // 5% chance
+                chance: 0.05,
                 effect: (gameState) => {
                     let reputationBoost = 10;
-                    let incomeBoost = gameState.income * 1.5; // 50% more income
+                    let incomeBoost = gameState.income * 1.5;
                     return {
                         reputation: reputationBoost,
                         income: incomeBoost - gameState.income,
@@ -591,52 +591,31 @@
 
         document.getElementById('modal-close').addEventListener('click', closeModal);
 
-        document.getElementById('takeLoan').addEventListener('click', function() {
-            const activeLoans = game.loans.length;
-            if (activeLoans >= 3) {
-                showModal('Loan Limit', 'You can only have up to 3 active loans at a time!');
-                return;
-            }
-            const buttons = [
-                { text: 'Small Loan ($5000)', onclick: () => takeLoan('small') },
-                { text: 'Medium Loan ($10000)', onclick: () => takeLoan('medium') },
-                { text: 'Large Loan ($20000)', onclick: () => takeLoan('large') }
-            ];
-            showModal('Take a Loan', 'Select a loan amount:\n10% interest, repay over 5 days.', buttons);
-        });
-
-        function takeLoan(size) {
-            const loan = loanOptions[size];
-            const totalRepayment = Math.floor(loan.amount * (1 + loan.interest));
-            const dailyRepayment = Math.floor(totalRepayment / loan.term);
-            game.loans.push({ amount: loan.amount, totalRepayment, dailyRepayment, daysLeft: loan.term });
-            game.money += loan.amount;
-            document.getElementById('money').textContent = Math.floor(game.money);
-            showModal('Loan Taken', `You borrowed $${loan.amount}.\nTotal repayment: $${totalRepayment}\nDaily repayment: $${dailyRepayment} for ${loan.term} days.`);
-        }
-
         function initializeGrid() {
-            let parkGrid = document.getElementById('parkGrid');
-            parkGrid.innerHTML = '';
+            const parkGrid = document.getElementById('parkGrid');
+            parkGrid.innerHTML = ''; // Clear any existing content
             for (let i = 0; i < 10; i++) {
-                let row = parkGrid.insertRow();
+                const row = parkGrid.insertRow(i);
                 for (let j = 0; j < 10; j++) {
-                    let cell = row.insertCell();
+                    const cell = row.insertCell(j);
                     cell.id = `cell-${i}-${j}`;
                     cell.style.width = '50px';
                     cell.style.height = '50px';
+                    // Initially empty, but apply zone coloring via CSS
                     if (grid[i][j]) {
-                        let bonusInfo = applyZoneBonus(grid[i][j]);
-                        let pathInfo = applyPathBonus(grid[i][j]);
+                        const bonusInfo = applyZoneBonus(grid[i][j]);
+                        const pathInfo = applyPathBonus(grid[i][j]);
                         cell.textContent = getColor(grid[i][j].type) + (bonusInfo.hasBonus || pathInfo.hasPathBonus ? '★' : '');
                     }
                 }
             }
         }
 
+        // Call initializeGrid immediately to ensure the grid is visible on load
         initializeGrid();
 
         document.getElementById('parkGrid').addEventListener('click', function(event) {
+            if (game.gameOver) return;
             if (event.target.tagName === 'TD') {
                 let row = event.target.parentNode.rowIndex;
                 let col = event.target.cellIndex;
@@ -673,7 +652,34 @@
             }
         });
 
+        document.getElementById('takeLoan').addEventListener('click', function() {
+            if (game.gameOver) return;
+            const activeLoans = game.loans.length;
+            if (activeLoans >= 3) {
+                showModal('Loan Limit', 'You can only have up to 3 active loans at a time!');
+                return;
+            }
+            const buttons = [
+                { text: 'Small Loan ($5000)', onclick: () => takeLoan('small') },
+                { text: 'Medium Loan ($10000)', onclick: () => takeLoan('medium') },
+                { text: 'Large Loan ($20000)', onclick: () => takeLoan('large') }
+            ];
+            showModal('Take a Loan', 'Select a loan amount:\n10% interest, repay over 5 days.', buttons);
+        });
+
+        function takeLoan(size) {
+            if (game.gameOver) return;
+            const loan = loanOptions[size];
+            const totalRepayment = Math.floor(loan.amount * (1 + loan.interest));
+            const dailyRepayment = Math.floor(totalRepayment / loan.term);
+            game.loans.push({ amount: loan.amount, totalRepayment, dailyRepayment, daysLeft: loan.term });
+            game.money += loan.amount;
+            document.getElementById('money').textContent = Math.floor(game.money);
+            showModal('Loan Taken', `You borrowed $${loan.amount}.\nTotal repayment: $${totalRepayment}\nDaily repayment: $${dailyRepayment} for ${loan.term} days.`);
+        }
+
         function build(type) {
+            if (game.gameOver) return;
             if (!selectedCell) {
                 showModal('Error', 'Please select a cell first!');
                 return;
@@ -713,6 +719,7 @@
         }
 
         function cancelItem() {
+            if (game.gameOver) return;
             if (!selectedCell || !selectedAttraction) {
                 showModal('Error', 'Please select an item to cancel!');
                 return;
@@ -737,6 +744,7 @@
         }
 
         function advertise(type) {
+            if (game.gameOver) return;
             if (game.money < ads[type].cost) {
                 showModal('Error', 'Not enough money for this ad!');
                 return;
@@ -752,7 +760,7 @@
         function updateUpgrades() {
             let upgradesDiv = document.getElementById('upgrades');
             upgradesDiv.innerHTML = '<button id="cancel" onclick="cancelItem()">Cancel Item</button>';
-            if (selectedAttraction) {
+            if (selectedAttraction && !game.gameOver) {
                 let type = selectedAttraction.type;
                 let availableUpgrades = upgrades[type];
                 if (availableUpgrades) {
@@ -776,6 +784,7 @@
         }
 
         function applyUpgrade(type, upgrade) {
+            if (game.gameOver) return;
             if (!selectedCell || !selectedAttraction || selectedAttraction.type !== type) {
                 showModal('Error', 'Select the correct attraction first!');
                 return;
@@ -809,7 +818,6 @@
             return date.toLocaleDateString('en-US', options);
         }
 
-        // Function to trigger random events
         function triggerRandomEvent(visitors, income) {
             let eventOccurred = false;
             let eventReport = '';
@@ -818,7 +826,6 @@
                     let gameState = { ...game, visitors, income };
                     let eventEffect = event.effect(gameState);
                     
-                    // Apply effects
                     if (eventEffect.visitors) visitors += eventEffect.visitors;
                     if (eventEffect.income) income += eventEffect.income;
                     if (eventEffect.money) game.money += eventEffect.money;
@@ -826,7 +833,7 @@
                     
                     eventReport += eventEffect.message + '\n';
                     eventOccurred = true;
-                    break; // Only one event per turn
+                    break;
                 }
             }
             if (eventOccurred) {
@@ -835,7 +842,19 @@
             return { visitors: Math.max(0, visitors), income: Math.max(0, income) };
         }
 
+        function endGame() {
+            game.gameOver = true;
+            document.getElementById('endTurn').disabled = true;
+            document.getElementById('takeLoan').disabled = true;
+            document.querySelectorAll('#menu button, #advertise button, #upgrades button').forEach(button => {
+                button.disabled = true;
+            });
+            showModal('Game Over', 'Your park has gone bankrupt! Money has fallen below $0.\nRefresh the page to start a new game.');
+        }
+
         document.getElementById('endTurn').addEventListener('click', function() {
+            if (game.gameOver) return;
+
             let attractiveness = game.attractions.reduce((sum, a) => sum + getAttractiveness(a.type), 0);
             let accessibility = game.attractions.reduce((prod, a) => prod * applyZoneBonus(a).stats.accessibilityBoost, 1);
             let visitors = Math.floor(attractiveness * 10 * (game.satisfaction / 100) * (game.reputation / 100) * (0.8 + Math.random() * 0.4) * accessibility);
@@ -853,12 +872,11 @@
             let servedVisitors = Math.min(visitors, totalCapacity);
             let income = servedVisitors * expectedIncomePerVisitor;
 
-            // Apply random event effects
             let eventResult = triggerRandomEvent(visitors, income);
             visitors = eventResult.visitors;
             income = eventResult.income;
             servedVisitors = Math.min(visitors, totalCapacity);
-            income = servedVisitors * expectedIncomePerVisitor; // Recalculate income after visitor changes
+            income = servedVisitors * expectedIncomePerVisitor;
 
             let totalMaintenance = game.attractions.reduce((sum, a) => sum + applyZoneBonus(a).stats.maintenance, 0);
 
@@ -874,6 +892,20 @@
                 return loan;
             }).filter(loan => loan !== null);
             game.money += income - totalMaintenance - loanRepayment;
+
+            if (game.money < 0) {
+                document.getElementById('money').textContent = Math.floor(game.money);
+                document.getElementById('date').textContent = formatDate(game.date);
+                document.getElementById('visitors').textContent = visitors;
+                document.getElementById('satisfaction').textContent = Math.floor(game.satisfaction);
+                document.getElementById('reputation').textContent = Math.floor(game.reputation);
+                let summary = `Day ended.\nVisitors: ${visitors}\nIncome: $${Math.floor(income)}\nMaintenance: $${totalMaintenance}`;
+                if (loanRepayment > 0) summary += `\nLoan Repayment: $${loanRepayment}`;
+                summary += `\nNet: $${Math.floor(income - totalMaintenance - loanRepayment)}`;
+                showModal('Day Summary', summary);
+                endGame();
+                return;
+            }
 
             let satisfactionChange;
             if (visitors > 0) {
