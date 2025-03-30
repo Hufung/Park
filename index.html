@@ -22,7 +22,7 @@
             max-width: 900px;
             width: 100%;
             text-align: center;
-            min-height: 900px; /* Ensure enough height for all content */
+            min-height: 900px;
             display: flex;
             flex-direction: column;
             justify-content: flex-start;
@@ -43,8 +43,10 @@
         }
         #top-bar {
             margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
         }
-        #endTurn {
+        #endTurn, #takeLoan {
             padding: 12px 20px;
             font-size: 16px;
             background: linear-gradient(135deg, #ff4500, #dc143c);
@@ -55,10 +57,18 @@
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
             transition: transform 0.2s, box-shadow 0.2s;
         }
-        #endTurn:hover {
+        #takeLoan {
+            background: linear-gradient(135deg, #32cd32, #228b22);
+        }
+        #endTurn:hover, #takeLoan:hover {
             transform: translateY(-2px);
             box-shadow: 0 6px 10px rgba(0, 0, 0, 0.3);
+        }
+        #endTurn:hover {
             background: linear-gradient(135deg, #ff6347, #ff0000);
+        }
+        #takeLoan:hover {
+            background: linear-gradient(135deg, #3cb371, #2e8b57);
         }
         #stats {
             display: flex;
@@ -199,6 +209,9 @@
             font-size: 16px;
             color: #333;
         }
+        #modal-content button {
+            margin: 10px 5px 0 0;
+        }
         #modal-close {
             position: absolute;
             top: 10px;
@@ -224,6 +237,7 @@
         <h1 id="header">Theme Park Tycoon</h1>
         <div id="top-bar">
             <button id="endTurn">End Turn</button>
+            <button id="takeLoan">Take Loan</button>
         </div>
         <div id="stats">
             <p>💰 Money: $<span id="money">10000</span></p>
@@ -288,7 +302,8 @@
             reputation: 50,
             attractions: [],
             date: new Date('2025-03-29'),
-            ads: []
+            ads: [],
+            loans: [] // Array to track active loans
         };
 
         // Attraction definitions
@@ -362,6 +377,13 @@
             flyers: { cost: 500, boost: 5, duration: 3 },
             billboard: { cost: 1500, boost: 15, duration: 5 },
             tvad: { cost: 3000, boost: 30, duration: 7 }
+        };
+
+        // Loan definitions
+        const loanOptions = {
+            small: { amount: 5000, interest: 0.10, term: 5 },
+            medium: { amount: 10000, interest: 0.10, term: 5 },
+            large: { amount: 20000, interest: 0.10, term: 5 }
         };
 
         // Attractiveness values
@@ -455,9 +477,16 @@
         let selectedAttraction = null;
 
         // Modal functions
-        function showModal(title, content) {
+        function showModal(title, content, buttons = []) {
             document.getElementById('modal-title').textContent = title;
-            document.getElementById('modal-body').innerHTML = content.replace(/\n/g, '<br>');
+            const modalBody = document.getElementById('modal-body');
+            modalBody.innerHTML = content.replace(/\n/g, '<br>');
+            buttons.forEach(btn => {
+                const button = document.createElement('button');
+                button.textContent = btn.text;
+                button.onclick = btn.onclick;
+                modalBody.appendChild(button);
+            });
             document.getElementById('modal').style.display = 'flex';
         }
 
@@ -466,6 +495,31 @@
         }
 
         document.getElementById('modal-close').addEventListener('click', closeModal);
+
+        // Loan system
+        document.getElementById('takeLoan').addEventListener('click', function() {
+            const activeLoans = game.loans.length;
+            if (activeLoans >= 3) {
+                showModal('Loan Limit', 'You can only have up to 3 active loans at a time!');
+                return;
+            }
+            const buttons = [
+                { text: 'Small Loan ($5000)', onclick: () => takeLoan('small') },
+                { text: 'Medium Loan ($10000)', onclick: () => takeLoan('medium') },
+                { text: 'Large Loan ($20000)', onclick: () => takeLoan('large') }
+            ];
+            showModal('Take a Loan', 'Select a loan amount:\n10% interest, repay over 5 days.', buttons);
+        });
+
+        function takeLoan(size) {
+            const loan = loanOptions[size];
+            const totalRepayment = Math.floor(loan.amount * (1 + loan.interest));
+            const dailyRepayment = Math.floor(totalRepayment / loan.term);
+            game.loans.push({ amount: loan.amount, totalRepayment, dailyRepayment, daysLeft: loan.term });
+            game.money += loan.amount;
+            document.getElementById('money').textContent = Math.floor(game.money);
+            showModal('Loan Taken', `You borrowed $${loan.amount}.\nTotal repayment: $${totalRepayment}\nDaily repayment: $${dailyRepayment} for ${loan.term} days.`);
+        }
 
         // Initialize the park grid
         function initializeGrid() {
@@ -538,7 +592,6 @@
                 return;
             }
 
-            // Restrict transportation to outer layer
             const transportTypes = ['busstation', 'trainstation', 'parkinglot'];
             if (transportTypes.includes(type)) {
                 let { row, col } = selectedCell;
@@ -571,14 +624,12 @@
             }
 
             let type = selectedAttraction.type;
-            let refund = Math.floor(attractionTypes[type].cost * 0.7); // 70% refund
+            let refund = Math.floor(attractionTypes[type].cost * 0.7);
             game.money += refund;
 
-            // Remove from attractions array and grid
             game.attractions = game.attractions.filter(a => a !== selectedAttraction);
             grid[selectedCell.row][selectedCell.col] = null;
 
-            // Update UI
             let cell = document.getElementById(`cell-${selectedCell.row}-${selectedCell.col}`);
             cell.textContent = '';
             cell.style.backgroundColor = '';
@@ -666,7 +717,7 @@
             return date.toLocaleDateString('en-US', options);
         }
 
-        // End turn logic
+        // End turn logic with loan repayment
         document.getElementById('endTurn').addEventListener('click', function() {
             let attractiveness = game.attractions.reduce((sum, a) => sum + getAttractiveness(a.type), 0);
             let accessibility = game.attractions.reduce((prod, a) => prod * applyZoneBonus(a).stats.accessibilityBoost, 1);
@@ -677,7 +728,20 @@
             let servedVisitors = Math.min(visitors, totalCapacity);
             let income = servedVisitors * expectedIncomePerVisitor;
             let totalMaintenance = game.attractions.reduce((sum, a) => sum + applyZoneBonus(a).stats.maintenance, 0);
-            game.money += income - totalMaintenance;
+
+            // Loan repayment
+            let loanRepayment = 0;
+            let loanReport = '';
+            game.loans = game.loans.map(loan => {
+                loanRepayment += loan.dailyRepayment;
+                loan.daysLeft--;
+                if (loan.daysLeft <= 0) {
+                    loanReport += `Loan of $${loan.amount} fully repaid.\n`;
+                    return null;
+                }
+                return loan;
+            }).filter(loan => loan !== null);
+            game.money += income - totalMaintenance - loanRepayment;
 
             // Satisfaction update with facility bonuses
             let satisfactionChange;
@@ -704,6 +768,7 @@
             }).filter(ad => ad !== null);
             game.reputation = Math.max(0, Math.min(100, game.reputation + reputationChange));
             if (adReport) showModal('Ad Expiration', adReport);
+            if (loanReport) showModal('Loan Update', loanReport);
 
             // Date update
             game.date.setDate(game.date.getDate() + 1);
@@ -714,7 +779,10 @@
             document.getElementById('visitors').textContent = visitors;
             document.getElementById('satisfaction').textContent = Math.floor(game.satisfaction);
             document.getElementById('reputation').textContent = Math.floor(game.reputation);
-            showModal('Day Summary', `Day ended.\nVisitors: ${visitors}\nIncome: $${Math.floor(income)}\nMaintenance: $${totalMaintenance}\nNet: $${Math.floor(income - totalMaintenance)}\nSatisfaction Bonus: +${facilityBonus}%\nReputation Change: ${reputationChange}`);
+            let summary = `Day ended.\nVisitors: ${visitors}\nIncome: $${Math.floor(income)}\nMaintenance: $${totalMaintenance}`;
+            if (loanRepayment > 0) summary += `\nLoan Repayment: $${loanRepayment}`;
+            summary += `\nNet: $${Math.floor(income - totalMaintenance - loanRepayment)}\nSatisfaction Bonus: +${facilityBonus}%\nReputation Change: ${reputationChange}`;
+            showModal('Day Summary', summary);
         });
 
         // Initial date display
