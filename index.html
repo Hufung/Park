@@ -77,9 +77,9 @@
             border-collapse: separate;
             border-spacing: 5px;
             margin: 20px auto;
-            width: 560px; /* 10 cells * (50px + 5px spacing) + border adjustments */
+            width: 560px;
             height: 560px;
-            display: block; /* Ensure it’s visible */
+            display: block;
         }
         #parkGrid td {
             width: 50px;
@@ -149,6 +149,13 @@
         #upgrades button:hover {
             background: linear-gradient(135deg, #ffec8b, #ffbf00);
         }
+        #cancel {
+            background: linear-gradient(135deg, #ff6347, #dc143c);
+            margin-left: 10px;
+        }
+        #cancel:hover {
+            background: linear-gradient(135deg, #ff4500, #ff0000);
+        }
     </style>
 </head>
 <body>
@@ -192,7 +199,9 @@
             <button onclick="advertise('billboard')">Billboard ($1500)</button>
             <button onclick="advertise('tvad')">TV Ad ($3000)</button>
         </div>
-        <div id="upgrades"></div>
+        <div id="upgrades">
+            <button id="cancel" onclick="cancelItem()">Cancel Item</button>
+        </div>
     </div>
 
     <script>
@@ -341,13 +350,13 @@
         // Initialize the park grid
         function initializeGrid() {
             let parkGrid = document.getElementById('parkGrid');
-            parkGrid.innerHTML = ''; // Clear any existing content
+            parkGrid.innerHTML = '';
             for (let i = 0; i < 10; i++) {
                 let row = parkGrid.insertRow();
                 for (let j = 0; j < 10; j++) {
                     let cell = row.insertCell();
                     cell.id = `cell-${i}-${j}`;
-                    cell.style.width = '50px'; // Explicitly set size
+                    cell.style.width = '50px';
                     cell.style.height = '50px';
                 }
             }
@@ -390,6 +399,16 @@
                 return;
             }
 
+            // Restrict transportation to outer layer
+            const transportTypes = ['busstation', 'trainstation', 'parkinglot'];
+            if (transportTypes.includes(type)) {
+                let { row, col } = selectedCell;
+                if (row !== 0 && row !== 9 && col !== 0 && col !== 9) {
+                    alert("Transportation can only be placed on the outer layer of the grid!");
+                    return;
+                }
+            }
+
             let attraction = { type: type, position: { row: selectedCell.row, col: selectedCell.col }, upgrades: {} };
             game.attractions.push(attraction);
             grid[selectedCell.row][selectedCell.col] = attraction;
@@ -402,6 +421,33 @@
             setTimeout(() => cell.style.transform = 'scale(1)', 200);
             document.getElementById('money').textContent = Math.floor(game.money);
             selectedCell = null;
+        }
+
+        // Cancel an item
+        function cancelItem() {
+            if (!selectedCell || !selectedAttraction) {
+                alert("Please select an item to cancel!");
+                return;
+            }
+
+            let type = selectedAttraction.type;
+            let refund = Math.floor(attractionTypes[type].cost * 0.7); // 70% refund
+            game.money += refund;
+
+            // Remove from attractions array and grid
+            game.attractions = game.attractions.filter(a => a !== selectedAttraction);
+            grid[selectedCell.row][selectedCell.col] = null;
+
+            // Update UI
+            let cell = document.getElementById(`cell-${selectedCell.row}-${selectedCell.col}`);
+            cell.textContent = '';
+            cell.style.backgroundColor = '';
+            document.getElementById('money').textContent = Math.floor(game.money);
+
+            alert(`Cancelled ${type}. Refunded $${refund}.`);
+            selectedCell = null;
+            selectedAttraction = null;
+            updateUpgrades();
         }
 
         // Advertisement function
@@ -425,7 +471,7 @@
         // Update upgrades UI
         function updateUpgrades() {
             let upgradesDiv = document.getElementById('upgrades');
-            upgradesDiv.innerHTML = '';
+            upgradesDiv.innerHTML = '<button id="cancel" onclick="cancelItem()">Cancel Item</button>';
             if (selectedAttraction) {
                 let type = selectedAttraction.type;
                 let availableUpgrades = upgrades[type];
