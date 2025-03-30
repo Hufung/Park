@@ -193,11 +193,17 @@
                 <button onclick="build('trainstation')">Train Station ($3500)</button>
                 <button onclick="build('parkinglot')">Parking Lot ($2000)</button>
             </div>
+            <div>
+                <h3>Facilities</h3>
+                <button onclick="build('restrooms')">Restrooms ($800)</button>
+                <button onclick="build('firstaid')">First Aid Station ($1200)</button>
+                <button onclick="build('benches')">Benches ($500)</button>
+            </div>
         </div>
         <div id="advertise">
-            <button onclick="advertise('flyers')">Flyers ($500)</button>
-            <button onclick="advertise('billboard')">Billboard ($1500)</button>
-            <button onclick="advertise('tvad')">TV Ad ($3000)</button>
+            <button onclick="advertise('flyers')">Flyers ($500, 3 days)</button>
+            <button onclick="advertise('billboard')">Billboard ($1500, 5 days)</button>
+            <button onclick="advertise('tvad')">TV Ad ($3000, 7 days)</button>
         </div>
         <div id="upgrades">
             <button id="cancel" onclick="cancelItem()">Cancel Item</button>
@@ -212,7 +218,8 @@
             satisfaction: 50,
             reputation: 50,
             attractions: [],
-            date: new Date('2025-03-29')
+            date: new Date('2025-03-29'),
+            ads: [] // Track active ads with duration
         };
 
         // Attraction definitions
@@ -227,7 +234,10 @@
             souvenir: { cost: 1800, maintenance: 40, incomePerVisitor: 3, capacity: 40, accessibilityBoost: 1 },
             busstation: { cost: 1500, maintenance: 25, incomePerVisitor: 0, capacity: 0, accessibilityBoost: 1.2 },
             trainstation: { cost: 3500, maintenance: 75, incomePerVisitor: 0, capacity: 0, accessibilityBoost: 1.5 },
-            parkinglot: { cost: 2000, maintenance: 40, incomePerVisitor: 0, capacity: 0, accessibilityBoost: 1.3 }
+            parkinglot: { cost: 2000, maintenance: 40, incomePerVisitor: 0, capacity: 0, accessibilityBoost: 1.3 },
+            restrooms: { cost: 800, maintenance: 15, incomePerVisitor: 0, capacity: 0, accessibilityBoost: 1, satisfactionBonus: 2 },
+            firstaid: { cost: 1200, maintenance: 25, incomePerVisitor: 0, capacity: 0, accessibilityBoost: 1, satisfactionBonus: 3 },
+            benches: { cost: 500, maintenance: 10, incomePerVisitor: 0, capacity: 0, accessibilityBoost: 1, satisfactionBonus: 1 }
         };
 
         // Upgrade definitions
@@ -278,6 +288,13 @@
             }
         };
 
+        // Advertisement definitions with duration
+        const ads = {
+            flyers: { cost: 500, boost: 5, duration: 3 },
+            billboard: { cost: 1500, boost: 15, duration: 5 },
+            tvad: { cost: 3000, boost: 30, duration: 7 }
+        };
+
         // Attractiveness values
         function getAttractiveness(type) {
             switch(type) {
@@ -292,6 +309,9 @@
                 case 'busstation': return 0;
                 case 'trainstation': return 0;
                 case 'parkinglot': return 0;
+                case 'restrooms': return 1;
+                case 'firstaid': return 1;
+                case 'benches': return 1;
                 default: return 0;
             }
         }
@@ -310,36 +330,49 @@
                 case 'busstation': return '🚌';
                 case 'trainstation': return '🚆';
                 case 'parkinglot': return '🚗';
+                case 'restrooms': return '🚻';
+                case 'firstaid': return '🏥';
+                case 'benches': return '🪑';
                 default: return '';
             }
         }
 
-        // Zone bonuses
+        // Zone bonuses and details
         function applyZoneBonus(attraction) {
             let { row, col } = attraction.position;
             let type = attraction.type;
             let baseStats = attraction.upgradedStats || attractionTypes[type];
             let bonus = { ...baseStats };
+            let zone = '';
+            let bonusDesc = 'None';
 
             if (row < 5 && col < 5) { // Thrill Zone
+                zone = 'Thrill Zone';
                 if (['rollercoaster', 'waterride', 'droptower'].includes(type)) {
                     bonus.incomePerVisitor *= 1.5;
+                    bonusDesc = 'Income +50%';
                 }
             } else if (row < 5 && col >= 5) { // Family Zone
+                zone = 'Family Zone';
                 if (['ferriswheel', 'carousel'].includes(type)) {
                     bonus.capacity *= 1.5;
+                    bonusDesc = 'Capacity +50%';
                 }
             } else if (row >= 5 && col < 5) { // Food Zone
+                zone = 'Food Zone';
                 if (['foodstall', 'restaurant', 'souvenir'].includes(type)) {
                     bonus.incomePerVisitor *= 1.25;
                     bonus.capacity *= 1.25;
+                    bonusDesc = 'Income +25%, Capacity +25%';
                 }
             } else if (row >= 5 && col >= 5) { // Access Zone
+                zone = 'Access Zone';
                 if (['busstation', 'trainstation', 'parkinglot'].includes(type)) {
                     bonus.accessibilityBoost *= 1.2;
+                    bonusDesc = 'Accessibility +20%';
                 }
             }
-            return bonus;
+            return { stats: bonus, zone, bonusDesc };
         }
 
         // Grid to track occupied cells
@@ -365,7 +398,7 @@
         // Call grid initialization immediately
         initializeGrid();
 
-        // Cell selection
+        // Cell selection with details
         document.getElementById('parkGrid').addEventListener('click', function(event) {
             if (event.target.tagName === 'TD') {
                 let row = event.target.parentNode.rowIndex;
@@ -381,6 +414,21 @@
                 selectedAttraction = grid[row][col];
                 event.target.style.backgroundColor = 'rgba(255, 255, 0, 0.7)';
                 updateUpgrades();
+
+                if (selectedAttraction) {
+                    let stats = applyZoneBonus(selectedAttraction).stats;
+                    let zone = applyZoneBonus(selectedAttraction).zone;
+                    let bonusDesc = applyZoneBonus(selectedAttraction).bonusDesc;
+                    let details = `Item: ${selectedAttraction.type}\n` +
+                                  `Zone: ${zone}\n` +
+                                  `Bonus: ${bonusDesc}\n` +
+                                  `Income per Visitor: $${stats.incomePerVisitor.toFixed(2)}\n` +
+                                  `Maintenance: $${stats.maintenance}\n` +
+                                  `Capacity: ${Math.floor(stats.capacity)}\n` +
+                                  `Accessibility Boost: ${stats.accessibilityBoost.toFixed(2)}x\n` +
+                                  `Satisfaction Bonus: ${stats.satisfactionBonus || 0}%`;
+                    alert(details);
+                }
             }
         });
 
@@ -450,22 +498,18 @@
             updateUpgrades();
         }
 
-        // Advertisement function
+        // Advertisement function with duration
         function advertise(type) {
-            const ads = {
-                flyers: { cost: 500, boost: 5 },
-                billboard: { cost: 1500, boost: 15 },
-                tvad: { cost: 3000, boost: 30 }
-            };
             if (game.money < ads[type].cost) {
                 alert("Not enough money for this ad!");
                 return;
             }
             game.money -= ads[type].cost;
             game.reputation = Math.min(100, game.reputation + ads[type].boost);
+            game.ads.push({ type: type, boost: ads[type].boost, daysLeft: ads[type].duration });
             document.getElementById('money').textContent = Math.floor(game.money);
             document.getElementById('reputation').textContent = Math.floor(game.reputation);
-            alert(`Advertisement placed! Reputation +${ads[type].boost}`);
+            alert(`Advertisement placed! ${type} boosts reputation by ${ads[type].boost} for ${ads[type].duration} days.`);
         }
 
         // Update upgrades UI
@@ -475,19 +519,21 @@
             if (selectedAttraction) {
                 let type = selectedAttraction.type;
                 let availableUpgrades = upgrades[type];
-                for (let upgrade in availableUpgrades) {
-                    if (!selectedAttraction.upgrades[upgrade]) {
-                        let button = document.createElement('button');
-                        let label = upgrade === 'thrill' ? 'Thrill Upgrade' :
-                                    upgrade === 'capacity' ? 'Capacity Upgrade' :
-                                    upgrade === 'menu' ? 'Menu Upgrade' :
-                                    upgrade === 'seating' ? 'Seating Upgrade' :
-                                    upgrade === 'merch' ? 'Merch Upgrade' :
-                                    upgrade === 'expansion' ? 'Expansion' :
-                                    upgrade === 'efficiency' ? 'Efficiency Upgrade' : 'Expansion Upgrade';
-                        button.textContent = `${label} ($${availableUpgrades[upgrade].cost})`;
-                        button.onclick = () => applyUpgrade(type, upgrade);
-                        upgradesDiv.appendChild(button);
+                if (availableUpgrades) {
+                    for (let upgrade in availableUpgrades) {
+                        if (!selectedAttraction.upgrades[upgrade]) {
+                            let button = document.createElement('button');
+                            let label = upgrade === 'thrill' ? 'Thrill Upgrade' :
+                                        upgrade === 'capacity' ? 'Capacity Upgrade' :
+                                        upgrade === 'menu' ? 'Menu Upgrade' :
+                                        upgrade === 'seating' ? 'Seating Upgrade' :
+                                        upgrade === 'merch' ? 'Merch Upgrade' :
+                                        upgrade === 'expansion' ? 'Expansion' :
+                                        upgrade === 'efficiency' ? 'Efficiency Upgrade' : 'Expansion Upgrade';
+                            button.textContent = `${label} ($${availableUpgrades[upgrade].cost})`;
+                            button.onclick = () => applyUpgrade(type, upgrade);
+                            upgradesDiv.appendChild(button);
+                        }
                     }
                 }
             }
@@ -528,17 +574,17 @@
         // End turn logic
         document.getElementById('endTurn').addEventListener('click', function() {
             let attractiveness = game.attractions.reduce((sum, a) => sum + getAttractiveness(a.type), 0);
-            let accessibility = game.attractions.reduce((prod, a) => prod * applyZoneBonus(a).accessibilityBoost, 1);
+            let accessibility = game.attractions.reduce((prod, a) => prod * applyZoneBonus(a).stats.accessibilityBoost, 1);
             let visitors = Math.floor(attractiveness * 10 * (game.satisfaction / 100) * (game.reputation / 100) * (0.8 + Math.random() * 0.4) * accessibility);
-            let totalCapacity = game.attractions.reduce((sum, a) => sum + applyZoneBonus(a).capacity, 0);
-            let weightedIncome = game.attractions.reduce((sum, a) => sum + applyZoneBonus(a).capacity * applyZoneBonus(a).incomePerVisitor, 0);
+            let totalCapacity = game.attractions.reduce((sum, a) => sum + applyZoneBonus(a).stats.capacity, 0);
+            let weightedIncome = game.attractions.reduce((sum, a) => sum + applyZoneBonus(a).stats.capacity * applyZoneBonus(a).stats.incomePerVisitor, 0);
             let expectedIncomePerVisitor = totalCapacity > 0 ? weightedIncome / totalCapacity : 0;
             let servedVisitors = Math.min(visitors, totalCapacity);
             let income = servedVisitors * expectedIncomePerVisitor;
-            let totalMaintenance = game.attractions.reduce((sum, a) => sum + applyZoneBonus(a).maintenance, 0);
+            let totalMaintenance = game.attractions.reduce((sum, a) => sum + applyZoneBonus(a).stats.maintenance, 0);
             game.money += income - totalMaintenance;
 
-            // Satisfaction update
+            // Satisfaction update with facility bonuses
             let satisfactionChange;
             if (visitors > 0) {
                 let ratio = servedVisitors / visitors;
@@ -546,11 +592,23 @@
             } else {
                 satisfactionChange = -1;
             }
-            game.satisfaction = Math.max(0, Math.min(100, game.satisfaction + satisfactionChange));
+            let facilityBonus = game.attractions.reduce((sum, a) => sum + (attractionTypes[a.type].satisfactionBonus || 0), 0);
+            game.satisfaction = Math.max(0, Math.min(100, game.satisfaction + satisfactionChange + facilityBonus));
 
-            // Reputation update
+            // Reputation update with ad expiration
             let reputationChange = visitors > 100 ? 5 : visitors >= 50 ? 2 : -3;
+            let adReport = '';
+            game.ads = game.ads.map(ad => {
+                ad.daysLeft--;
+                if (ad.daysLeft <= 0) {
+                    game.reputation -= ad.boost;
+                    adReport += `${ad.type} expired, reputation -${ad.boost}\n`;
+                    return null;
+                }
+                return ad;
+            }).filter(ad => ad !== null);
             game.reputation = Math.max(0, Math.min(100, game.reputation + reputationChange));
+            if (adReport) alert(adReport);
 
             // Date update
             game.date.setDate(game.date.getDate() + 1);
@@ -561,7 +619,7 @@
             document.getElementById('visitors').textContent = visitors;
             document.getElementById('satisfaction').textContent = Math.floor(game.satisfaction);
             document.getElementById('reputation').textContent = Math.floor(game.reputation);
-            alert(`Day ended. Visitors: ${visitors}, Income: $${Math.floor(income)}, Maintenance: $${totalMaintenance}, Net: $${Math.floor(income - totalMaintenance)}, Reputation Change: ${reputationChange}`);
+            alert(`Day ended. Visitors: ${visitors}, Income: $${Math.floor(income)}, Maintenance: $${totalMaintenance}, Net: $${Math.floor(income - totalMaintenance)}, Satisfaction Bonus: +${facilityBonus}%, Reputation Change: ${reputationChange}`);
         });
 
         // Initial date display
