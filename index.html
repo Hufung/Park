@@ -11,8 +11,9 @@
             min-height: 100vh;
             display: flex;
             justify-content: center;
-            align-items: center;
+            align-items: flex-start; /* Start from top to avoid squashing */
             font-family: 'Arial', sans-serif;
+            padding-top: 20px; /* Add breathing room at top */
         }
         #game {
             background: rgba(255, 255, 255, 0.95);
@@ -22,18 +23,18 @@
             max-width: 900px;
             width: 100%;
             text-align: center;
-            min-height: 900px;
+            position: relative; /* Ensure children respect this container */
             display: flex;
             flex-direction: column;
-            justify-content: flex-start;
             align-items: center;
+            gap: 20px; /* Space between flex children */
         }
         #header {
             font-family: 'Amatic SC', cursive;
             font-size: 48px;
             color: #ff4500;
             text-shadow: 2px 2px 4px #ffd700;
-            margin-bottom: 10px;
+            margin: 0 0 10px;
             animation: bounce 2s infinite;
         }
         @keyframes bounce {
@@ -42,7 +43,6 @@
             60% { transform: translateY(-5px); }
         }
         #top-bar {
-            margin-bottom: 20px;
             display: flex;
             gap: 10px;
         }
@@ -76,7 +76,6 @@
             background: #f0f8ff;
             padding: 15px;
             border-radius: 10px;
-            margin-bottom: 20px;
             box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
             width: 100%;
             max-width: 600px;
@@ -93,10 +92,10 @@
         #parkGrid {
             border-collapse: separate;
             border-spacing: 5px;
-            margin: 20px auto;
             width: 560px;
             height: 560px;
             display: block;
+            margin: 20px auto; /* Ensure clearance above and below */
         }
         #parkGrid td {
             width: 50px;
@@ -123,11 +122,11 @@
             flex-wrap: wrap;
             justify-content: center;
             gap: 10px;
-            margin: 20px 0;
             padding: 10px;
             border-radius: 10px;
             width: 100%;
             max-width: 800px;
+            margin-top: 20px; /* Extra spacing from grid */
         }
         #menu > div {
             background: rgba(240, 248, 255, 0.8);
@@ -303,7 +302,7 @@
             attractions: [],
             date: new Date('2025-03-29'),
             ads: [],
-            loans: [] // Array to track active loans
+            loans: []
         };
 
         // Attraction definitions
