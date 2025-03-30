@@ -77,6 +77,9 @@
             border-collapse: separate;
             border-spacing: 5px;
             margin: 20px auto;
+            width: 560px; /* 10 cells * (50px + 5px spacing) + border adjustments */
+            height: 560px;
+            display: block; /* Ensure it’s visible */
         }
         #parkGrid td {
             width: 50px;
@@ -336,17 +339,25 @@
         let selectedAttraction = null;
 
         // Initialize the park grid
-        let parkGrid = document.getElementById('parkGrid');
-        for(let i = 0; i < 10; i++) {
-            let row = parkGrid.insertRow();
-            for(let j = 0; j < 10; j++) {
-                let cell = row.insertCell();
-                cell.id = `cell-${i}-${j}`;
+        function initializeGrid() {
+            let parkGrid = document.getElementById('parkGrid');
+            parkGrid.innerHTML = ''; // Clear any existing content
+            for (let i = 0; i < 10; i++) {
+                let row = parkGrid.insertRow();
+                for (let j = 0; j < 10; j++) {
+                    let cell = row.insertCell();
+                    cell.id = `cell-${i}-${j}`;
+                    cell.style.width = '50px'; // Explicitly set size
+                    cell.style.height = '50px';
+                }
             }
         }
 
+        // Call grid initialization immediately
+        initializeGrid();
+
         // Cell selection
-        parkGrid.addEventListener('click', function(event) {
+        document.getElementById('parkGrid').addEventListener('click', function(event) {
             if (event.target.tagName === 'TD') {
                 let row = event.target.parentNode.rowIndex;
                 let col = event.target.cellIndex;
@@ -451,4 +462,64 @@
             selectedAttraction.upgrades[upgrade] = true;
             selectedAttraction.upgradedStats = upgrades[type][upgrade].effect(selectedAttraction.upgradedStats || attractionTypes[type]);
             document.getElementById('money').textContent = Math.floor(game.money);
-            update
+            updateUpgrades();
+            let label = upgrade === 'thrill' ? 'Thrill Upgrade' :
+                        upgrade === 'capacity' ? 'Capacity Upgrade' :
+                        upgrade === 'menu' ? 'Menu Upgrade' :
+                        upgrade === 'seating' ? 'Seating Upgrade' :
+                        upgrade === 'merch' ? 'Merch Upgrade' :
+                        upgrade === 'expansion' ? 'Expansion' :
+                        upgrade === 'efficiency' ? 'Efficiency Upgrade' : 'Expansion Upgrade';
+            alert(`${label} applied to ${type}!`);
+        }
+
+        // Format date for display
+        function formatDate(date) {
+            const options = { year: 'numeric', month: 'long', day: 'numeric' };
+            return date.toLocaleDateString('en-US', options);
+        }
+
+        // End turn logic
+        document.getElementById('endTurn').addEventListener('click', function() {
+            let attractiveness = game.attractions.reduce((sum, a) => sum + getAttractiveness(a.type), 0);
+            let accessibility = game.attractions.reduce((prod, a) => prod * applyZoneBonus(a).accessibilityBoost, 1);
+            let visitors = Math.floor(attractiveness * 10 * (game.satisfaction / 100) * (game.reputation / 100) * (0.8 + Math.random() * 0.4) * accessibility);
+            let totalCapacity = game.attractions.reduce((sum, a) => sum + applyZoneBonus(a).capacity, 0);
+            let weightedIncome = game.attractions.reduce((sum, a) => sum + applyZoneBonus(a).capacity * applyZoneBonus(a).incomePerVisitor, 0);
+            let expectedIncomePerVisitor = totalCapacity > 0 ? weightedIncome / totalCapacity : 0;
+            let servedVisitors = Math.min(visitors, totalCapacity);
+            let income = servedVisitors * expectedIncomePerVisitor;
+            let totalMaintenance = game.attractions.reduce((sum, a) => sum + applyZoneBonus(a).maintenance, 0);
+            game.money += income - totalMaintenance;
+
+            // Satisfaction update
+            let satisfactionChange;
+            if (visitors > 0) {
+                let ratio = servedVisitors / visitors;
+                satisfactionChange = (ratio - 0.5) * 10;
+            } else {
+                satisfactionChange = -1;
+            }
+            game.satisfaction = Math.max(0, Math.min(100, game.satisfaction + satisfactionChange));
+
+            // Reputation update
+            let reputationChange = visitors > 100 ? 5 : visitors >= 50 ? 2 : -3;
+            game.reputation = Math.max(0, Math.min(100, game.reputation + reputationChange));
+
+            // Date update
+            game.date.setDate(game.date.getDate() + 1);
+
+            // Update UI
+            document.getElementById('money').textContent = Math.floor(game.money);
+            document.getElementById('date').textContent = formatDate(game.date);
+            document.getElementById('visitors').textContent = visitors;
+            document.getElementById('satisfaction').textContent = Math.floor(game.satisfaction);
+            document.getElementById('reputation').textContent = Math.floor(game.reputation);
+            alert(`Day ended. Visitors: ${visitors}, Income: $${Math.floor(income)}, Maintenance: $${totalMaintenance}, Net: $${Math.floor(income - totalMaintenance)}, Reputation Change: ${reputationChange}`);
+        });
+
+        // Initial date display
+        document.getElementById('date').textContent = formatDate(game.date);
+    </script>
+</body>
+</html>
