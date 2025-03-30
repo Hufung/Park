@@ -6,14 +6,14 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Amatic+SC:wght@700&display=swap');
         body {
-            background: linear-gradient(to bottom, #87ceeb, #98fb98), url('https://images.unsplash.com/photo-1622902046580-2b47f567fc30?auto=format&fit=crop&w=1350&q=80') no-repeat center/cover;
+            background: linear-gradient(to bottom, rgba(0, 191, 255, 0.8), rgba(255, 215, 0, 0.8)), url('https://images.unsplash.com/photo-1622902046580-2b47f567fc30?auto=format&fit=crop&w=1350&q=80') no-repeat center/cover;
             margin: 0;
             min-height: 100vh;
             display: flex;
             justify-content: center;
-            align-items: flex-start;
+            align-items: flex-start; /* Start from top to avoid squashing */
             font-family: 'Arial', sans-serif;
-            padding-top: 20px;
+            padding-top: 20px; /* Add breathing room at top */
         }
         #game {
             background: rgba(255, 255, 255, 0.95);
@@ -23,10 +23,11 @@
             max-width: 900px;
             width: 100%;
             text-align: center;
+            position: relative; /* Ensure children respect this container */
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 20px;
+            gap: 20px; /* Space between flex children */
         }
         #header {
             font-family: 'Amatic SC', cursive;
@@ -89,34 +90,33 @@
             color: #ff4500;
         }
         #parkGrid {
-            border-collapse: collapse;
-            margin: 20px auto;
-            background: linear-gradient(to bottom, #87ceeb 20%, #98fb98 80%);
-            border: 4px solid #4a2c0f;
-            border-radius: 10px;
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+            border-collapse: separate;
+            border-spacing: 5px;
+            width: 560px;
+            height: 560px;
+            display: block;
+            margin: 20px auto; /* Ensure clearance above and below */
         }
         #parkGrid td {
             width: 50px;
             height: 50px;
-            border: 1px solid #ccc;
+            background: #fff;
+            border: 2px solid #666;
+            border-radius: 10px;
+            cursor: pointer;
             text-align: center;
             font-size: 24px;
-            cursor: pointer;
-            transition: background 0.2s, transform 0.2s;
-            background: rgba(255, 255, 255, 0.5);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            transition: transform 0.2s, box-shadow 0.2s;
         }
         #parkGrid td:hover {
-            background: rgba(255, 255, 0, 0.7);
-            transform: scale(1.05);
+            transform: scale(1.1);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
         }
-        #parkGrid td.path {
-            background: #d2b48c;
-            border: 1px solid #8b5a2b;
-        }
-        #parkGrid td.selected {
-            background: rgba(255, 255, 0, 0.7);
-        }
+        #parkGrid tr:nth-child(-n+5) td:nth-child(-n+5) { background: rgba(255, 99, 71, 0.2); } /* Thrill Zone */
+        #parkGrid tr:nth-child(-n+5) td:nth-child(n+6) { background: rgba(144, 238, 144, 0.2); } /* Family Zone */
+        #parkGrid tr:nth-child(n+6) td:nth-child(-n+5) { background: rgba(255, 182, 193, 0.2); } /* Food Zone */
+        #parkGrid tr:nth-child(n+6) td:nth-child(n+6) { background: rgba(135, 206, 235, 0.2); } /* Access Zone */
         #menu, #advertise, #upgrades {
             display: flex;
             flex-wrap: wrap;
@@ -126,7 +126,7 @@
             border-radius: 10px;
             width: 100%;
             max-width: 800px;
-            margin-top: 20px;
+            margin-top: 20px; /* Extra spacing from grid */
         }
         #menu > div {
             background: rgba(240, 248, 255, 0.8);
@@ -197,7 +197,7 @@
             text-align: left;
             position: relative;
         }
-        #modal-content h3 {
+        #modal-content h2 {
             margin: 0 0 10px;
             color: #ff4500;
             font-family: 'Amatic SC', cursive;
@@ -272,7 +272,6 @@
                 <button onclick="build('restrooms')">Restrooms ($800)</button>
                 <button onclick="build('firstaid')">First Aid Station ($1200)</button>
                 <button onclick="build('benches')">Benches ($500)</button>
-                <button onclick="build('path')">Path ($200)</button>
             </div>
         </div>
         <div id="advertise">
@@ -288,7 +287,7 @@
     <div id="modal">
         <div id="modal-content">
             <button id="modal-close">X</button>
-            <h3 id="modal-title"></h3>
+            <h2 id="modal-title"></h2>
             <div id="modal-body"></div>
         </div>
     </div>
@@ -321,8 +320,7 @@
             parkinglot: { cost: 2000, maintenance: 40, incomePerVisitor: 0, capacity: 0, accessibilityBoost: 1.3 },
             restrooms: { cost: 800, maintenance: 15, incomePerVisitor: 0, capacity: 0, accessibilityBoost: 1, satisfactionBonus: 2 },
             firstaid: { cost: 1200, maintenance: 25, incomePerVisitor: 0, capacity: 0, accessibilityBoost: 1, satisfactionBonus: 3 },
-            benches: { cost: 500, maintenance: 10, incomePerVisitor: 0, capacity: 0, accessibilityBoost: 1, satisfactionBonus: 1 },
-            path: { cost: 200, maintenance: 5, incomePerVisitor: 0, capacity: 0, accessibilityBoost: 1 }
+            benches: { cost: 500, maintenance: 10, incomePerVisitor: 0, capacity: 0, accessibilityBoost: 1, satisfactionBonus: 1 }
         };
 
         // Upgrade definitions
@@ -404,7 +402,6 @@
                 case 'restrooms': return 1;
                 case 'firstaid': return 1;
                 case 'benches': return 1;
-                case 'path': return 0;
                 default: return 0;
             }
         }
@@ -426,57 +423,55 @@
                 case 'restrooms': return '🚻';
                 case 'firstaid': return '🏥';
                 case 'benches': return '🪑';
-                case 'path': return '🛤️';
                 default: return '';
             }
         }
 
-        // Check if an attraction is next to a path
-        function isNextToPath(row, col) {
-            const directions = [[-1, 0], [1, 0], [0, -1], [0, 1]]; // Up, down, left, right
-            return directions.some(([dr, dc]) => {
-                const newRow = row + dr;
-                const newCol = col + dc;
-                return newRow >= 0 && newRow < 10 && newCol >= 0 && newCol < 10 &&
-                       game.attractions.some(a => a.row === newRow && a.col === newCol && a.type === 'path');
-            });
+        // Zone bonuses and details
+        function applyZoneBonus(attraction) {
+            let { row, col } = attraction.position;
+            let type = attraction.type;
+            let baseStats = attraction.upgradedStats || attractionTypes[type];
+            let bonus = { ...baseStats };
+            let zone = '';
+            let bonusDesc = 'None';
+            let hasBonus = false;
+
+            if (row < 5 && col < 5) { // Thrill Zone
+                zone = 'Thrill Zone';
+                if (['rollercoaster', 'waterride', 'droptower'].includes(type)) {
+                    bonus.incomePerVisitor *= 1.5;
+                    bonusDesc = 'Income +50%';
+                    hasBonus = true;
+                }
+            } else if (row < 5 && col >= 5) { // Family Zone
+                zone = 'Family Zone';
+                if (['ferriswheel', 'carousel'].includes(type)) {
+                    bonus.capacity *= 1.5;
+                    bonusDesc = 'Capacity +50%';
+                    hasBonus = true;
+                }
+            } else if (row >= 5 && col < 5) { // Food Zone
+                zone = 'Food Zone';
+                if (['foodstall', 'restaurant', 'souvenir'].includes(type)) {
+                    bonus.incomePerVisitor *= 1.25;
+                    bonus.capacity *= 1.25;
+                    bonusDesc = 'Income +25%, Capacity +25%';
+                    hasBonus = true;
+                }
+            } else if (row >= 5 && col >= 5) { // Access Zone
+                zone = 'Access Zone';
+                if (['busstation', 'trainstation', 'parkinglot'].includes(type)) {
+                    bonus.accessibilityBoost *= 1.2;
+                    bonusDesc = 'Accessibility +20%';
+                    hasBonus = true;
+                }
+            }
+            return { stats: bonus, zone, bonusDesc, hasBonus };
         }
 
-        // Apply path bonus and zone bonus
-        function applyBonuses(attraction) {
-            let baseStats = attraction.upgradedStats || attractionTypes[attraction.type];
-            let bonusStats = { ...baseStats };
-            let bonusDesc = [];
-
-            // Path bonus for rides and stores
-            const incomeTypes = ['rollercoaster', 'ferriswheel', 'foodstall', 'carousel', 'waterride', 'droptower', 'restaurant', 'souvenir'];
-            if (incomeTypes.includes(attraction.type) && isNextToPath(attraction.row, attraction.col)) {
-                bonusStats.incomePerVisitor *= 1.25;
-                bonusDesc.push('Path Bonus: Income +25%');
-            }
-
-            // Zone bonus based on grid position
-            const row = attraction.row;
-            const col = attraction.col;
-            if (row < 5 && col < 5 && ['rollercoaster', 'waterride', 'droptower'].includes(attraction.type)) { // Top-left: Thrill
-                bonusStats.incomePerVisitor *= 1.5;
-                bonusDesc.push('Thrill Zone: Income +50%');
-            } else if (row < 5 && col >= 5 && ['ferriswheel', 'carousel'].includes(attraction.type)) { // Top-right: Family
-                bonusStats.capacity *= 1.5;
-                bonusDesc.push('Family Zone: Capacity +50%');
-            } else if (row >= 5 && col < 5 && ['foodstall', 'restaurant', 'souvenir'].includes(attraction.type)) { // Bottom-left: Food
-                bonusStats.incomePerVisitor *= 1.25;
-                bonusStats.capacity *= 1.25;
-                bonusDesc.push('Food Zone: Income +25%, Capacity +25%');
-            } else if (row >= 5 && col >= 5 && ['busstation', 'trainstation', 'parkinglot'].includes(attraction.type)) { // Bottom-right: Access
-                bonusStats.accessibilityBoost *= 1.2;
-                bonusDesc.push('Access Zone: Accessibility +20%');
-            }
-
-            return { stats: bonusStats, bonusDesc: bonusDesc.length ? bonusDesc.join('\n') : 'None' };
-        }
-
-        // Grid state
+        // Grid to track occupied cells
+        let grid = Array(10).fill().map(() => Array(10).fill(null));
         let selectedCell = null;
         let selectedAttraction = null;
 
@@ -525,79 +520,69 @@
             showModal('Loan Taken', `You borrowed $${loan.amount}.\nTotal repayment: $${totalRepayment}\nDaily repayment: $${dailyRepayment} for ${loan.term} days.`);
         }
 
-        // Initialize the grid
+        // Initialize the park grid
         function initializeGrid() {
-            const grid = document.getElementById('parkGrid');
+            let parkGrid = document.getElementById('parkGrid');
+            parkGrid.innerHTML = '';
             for (let i = 0; i < 10; i++) {
-                const row = document.createElement('tr');
+                let row = parkGrid.insertRow();
                 for (let j = 0; j < 10; j++) {
-                    const cell = document.createElement('td');
-                    cell.dataset.row = i;
-                    cell.dataset.col = j;
-                    row.appendChild(cell);
+                    let cell = row.insertCell();
+                    cell.id = `cell-${i}-${j}`;
+                    cell.style.width = '50px';
+                    cell.style.height = '50px';
+                    if (grid[i][j]) {
+                        let bonusInfo = applyZoneBonus(grid[i][j]);
+                        cell.textContent = getColor(grid[i][j].type) + (bonusInfo.hasBonus ? '★' : '');
+                    }
                 }
-                grid.appendChild(row);
             }
         }
 
-        // Update the grid display
-        function updateGrid() {
-            const cells = document.querySelectorAll('#parkGrid td');
-            cells.forEach(cell => {
-                cell.textContent = '';
-                cell.classList.remove('path', 'selected');
-            });
-            game.attractions.forEach((attraction, index) => {
-                const cell = document.querySelector(`#parkGrid td[data-row="${attraction.row}"][data-col="${attraction.col}"]`);
-                cell.textContent = getColor(attraction.type);
-                cell.dataset.index = index;
-                if (attraction.type === 'path') {
-                    cell.classList.add('path');
-                }
-            });
-            if (selectedCell) {
-                selectedCell.classList.add('selected');
-            }
-        }
+        // Call grid initialization immediately
+        initializeGrid();
 
-        // Grid selection
+        // Cell selection with details in modal
         document.getElementById('parkGrid').addEventListener('click', function(event) {
-            const cell = event.target.closest('td');
-            if (cell) {
+            if (event.target.tagName === 'TD') {
+                let row = event.target.parentNode.rowIndex;
+                let col = event.target.cellIndex;
                 if (selectedCell) {
-                    selectedCell.classList.remove('selected');
+                    let prevCell = document.getElementById(`cell-${selectedCell.row}-${selectedCell.col}`);
+                    prevCell.style.backgroundColor = '';
+                    if (!grid[selectedCell.row][selectedCell.col]) {
+                        prevCell.textContent = '';
+                    }
                 }
-                selectedCell = cell;
-                cell.classList.add('selected');
-                const row = parseInt(cell.dataset.row);
-                const col = parseInt(cell.dataset.col);
-                const attraction = game.attractions.find(a => a.row === row && a.col === col);
-                selectedAttraction = attraction || null;
+                selectedCell = { row, col };
+                selectedAttraction = grid[row][col];
+                event.target.style.backgroundColor = 'rgba(255, 255, 0, 0.7)';
                 updateUpgrades();
-                if (attraction) {
-                    const bonusInfo = applyBonuses(attraction);
-                    const details = `Item: ${attraction.type}\n` +
-                                    `Position: (${row}, ${col})\n` +
-                                    `Bonuses:\n${bonusInfo.bonusDesc}\n` +
-                                    `Income per Visitor: $${bonusInfo.stats.incomePerVisitor.toFixed(2)}\n` +
-                                    `Maintenance: $${bonusInfo.stats.maintenance}\n` +
-                                    `Capacity: ${Math.floor(bonusInfo.stats.capacity)}\n` +
-                                    `Accessibility Boost: ${bonusInfo.stats.accessibilityBoost.toFixed(2)}x\n` +
-                                    `Satisfaction Bonus: ${bonusInfo.stats.satisfactionBonus || 0}%`;
+
+                if (selectedAttraction) {
+                    let stats = applyZoneBonus(selectedAttraction).stats;
+                    let zone = applyZoneBonus(selectedAttraction).zone;
+                    let bonusDesc = applyZoneBonus(selectedAttraction).bonusDesc;
+                    let details = `Item: ${selectedAttraction.type}\n` +
+                                  `Zone: ${zone}\n` +
+                                  `Bonus: ${bonusDesc}\n` +
+                                  `Income per Visitor: $${stats.incomePerVisitor.toFixed(2)}\n` +
+                                  `Maintenance: $${stats.maintenance}\n` +
+                                  `Capacity: ${Math.floor(stats.capacity)}\n` +
+                                  `Accessibility Boost: ${stats.accessibilityBoost.toFixed(2)}x\n` +
+                                  `Satisfaction Bonus: ${stats.satisfactionBonus || 0}%`;
                     showModal('Item Details', details);
                 }
             }
         });
 
-        // Build an attraction
+        // Build an attraction or transportation
         function build(type) {
             if (!selectedCell) {
                 showModal('Error', 'Please select a cell first!');
                 return;
             }
-            const row = parseInt(selectedCell.dataset.row);
-            const col = parseInt(selectedCell.dataset.col);
-            if (game.attractions.some(a => a.row === row && a.col === col)) {
+            if (grid[selectedCell.row][selectedCell.col]) {
                 showModal('Error', 'This cell is already occupied!');
                 return;
             }
@@ -606,30 +591,47 @@
                 return;
             }
 
-            const attraction = { type, row, col, upgrades: {} };
+            const transportTypes = ['busstation', 'trainstation', 'parkinglot'];
+            if (transportTypes.includes(type)) {
+                let { row, col } = selectedCell;
+                if (row !== 0 && row !== 9 && col !== 0 && col !== 9) {
+                    showModal('Error', 'Transportation can only be placed on the outer layer of the grid!');
+                    return;
+                }
+            }
+
+            let attraction = { type: type, position: { row: selectedCell.row, col: selectedCell.col }, upgrades: {} };
             game.attractions.push(attraction);
+            grid[selectedCell.row][selectedCell.col] = attraction;
             game.money -= attractionTypes[type].cost;
 
-            updateGrid();
-            selectedCell.classList.remove('selected');
-            selectedCell = null;
+            let cell = document.getElementById(`cell-${selectedCell.row}-${selectedCell.col}`);
+            let bonusInfo = applyZoneBonus(attraction);
+            cell.textContent = getColor(type) + (bonusInfo.hasBonus ? '★' : '');
+            cell.style.backgroundColor = '';
+            cell.style.transform = 'scale(1.1)';
+            setTimeout(() => cell.style.transform = 'scale(1)', 200);
             document.getElementById('money').textContent = Math.floor(game.money);
+            selectedCell = null;
         }
 
         // Cancel an item
         function cancelItem() {
-            if (!selectedAttraction) {
+            if (!selectedCell || !selectedAttraction) {
                 showModal('Error', 'Please select an item to cancel!');
                 return;
             }
 
-            const type = selectedAttraction.type;
-            const refund = Math.floor(attractionTypes[type].cost * 0.7);
+            let type = selectedAttraction.type;
+            let refund = Math.floor(attractionTypes[type].cost * 0.7);
             game.money += refund;
 
             game.attractions = game.attractions.filter(a => a !== selectedAttraction);
-            updateGrid();
-            if (selectedCell) selectedCell.classList.remove('selected');
+            grid[selectedCell.row][selectedCell.col] = null;
+
+            let cell = document.getElementById(`cell-${selectedCell.row}-${selectedCell.col}`);
+            cell.textContent = '';
+            cell.style.backgroundColor = '';
             document.getElementById('money').textContent = Math.floor(game.money);
 
             showModal('Cancellation', `Cancelled ${type}. Refunded $${refund}.`);
@@ -681,7 +683,7 @@
 
         // Apply upgrade
         function applyUpgrade(type, upgrade) {
-            if (!selectedAttraction || selectedAttraction.type !== type) {
+            if (!selectedCell || !selectedAttraction || selectedAttraction.type !== type) {
                 showModal('Error', 'Select the correct attraction first!');
                 return;
             }
@@ -694,7 +696,9 @@
             selectedAttraction.upgrades[upgrade] = true;
             selectedAttraction.upgradedStats = upgrades[type][upgrade].effect(selectedAttraction.upgradedStats || attractionTypes[type]);
             document.getElementById('money').textContent = Math.floor(game.money);
-            updateGrid();
+            let cell = document.getElementById(`cell-${selectedCell.row}-${selectedCell.col}`);
+            let bonusInfo = applyZoneBonus(selectedAttraction);
+            cell.textContent = getColor(type) + (bonusInfo.hasBonus ? '★' : '');
             updateUpgrades();
             let label = upgrade === 'thrill' ? 'Thrill Upgrade' :
                         upgrade === 'capacity' ? 'Capacity Upgrade' :
@@ -715,14 +719,14 @@
         // End turn logic with loan repayment
         document.getElementById('endTurn').addEventListener('click', function() {
             let attractiveness = game.attractions.reduce((sum, a) => sum + getAttractiveness(a.type), 0);
-            let accessibility = game.attractions.reduce((prod, a) => prod * applyBonuses(a).stats.accessibilityBoost, 1);
+            let accessibility = game.attractions.reduce((prod, a) => prod * applyZoneBonus(a).stats.accessibilityBoost, 1);
             let visitors = Math.floor(attractiveness * 10 * (game.satisfaction / 100) * (game.reputation / 100) * (0.8 + Math.random() * 0.4) * accessibility);
-            let totalCapacity = game.attractions.reduce((sum, a) => sum + applyBonuses(a).stats.capacity, 0);
-            let weightedIncome = game.attractions.reduce((sum, a) => sum + applyBonuses(a).stats.capacity * applyBonuses(a).stats.incomePerVisitor, 0);
+            let totalCapacity = game.attractions.reduce((sum, a) => sum + applyZoneBonus(a).stats.capacity, 0);
+            let weightedIncome = game.attractions.reduce((sum, a) => sum + applyZoneBonus(a).stats.capacity * applyZoneBonus(a).stats.incomePerVisitor, 0);
             let expectedIncomePerVisitor = totalCapacity > 0 ? weightedIncome / totalCapacity : 0;
             let servedVisitors = Math.min(visitors, totalCapacity);
             let income = servedVisitors * expectedIncomePerVisitor;
-            let totalMaintenance = game.attractions.reduce((sum, a) => sum + applyBonuses(a).stats.maintenance, 0);
+            let totalMaintenance = game.attractions.reduce((sum, a) => sum + applyZoneBonus(a).stats.maintenance, 0);
 
             // Loan repayment
             let loanRepayment = 0;
@@ -780,10 +784,8 @@
             showModal('Day Summary', summary);
         });
 
-        // Initial setup
-        initializeGrid();
+        // Initial date display
         document.getElementById('date').textContent = formatDate(game.date);
-        updateGrid();
     </script>
 </body>
 </html>
