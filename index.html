@@ -11,9 +11,9 @@
             min-height: 100vh;
             display: flex;
             justify-content: center;
-            align-items: flex-start; /* Start from top to avoid squashing */
+            align-items: flex-start;
             font-family: 'Arial', sans-serif;
-            padding-top: 20px; /* Add breathing room at top */
+            padding-top: 20px;
         }
         #game {
             background: rgba(255, 255, 255, 0.95);
@@ -23,11 +23,11 @@
             max-width: 900px;
             width: 100%;
             text-align: center;
-            position: relative; /* Ensure children respect this container */
+            position: relative;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 20px; /* Space between flex children */
+            gap: 20px;
         }
         #header {
             font-family: 'Amatic SC', cursive;
@@ -95,7 +95,7 @@
             width: 560px;
             height: 560px;
             display: block;
-            margin: 20px auto; /* Ensure clearance above and below */
+            margin: 20px auto;
         }
         #parkGrid td {
             width: 50px;
@@ -113,10 +113,10 @@
             transform: scale(1.1);
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
         }
-        #parkGrid tr:nth-child(-n+5) td:nth-child(-n+5) { background: rgba(255, 99, 71, 0.2); } /* Thrill Zone */
-        #parkGrid tr:nth-child(-n+5) td:nth-child(n+6) { background: rgba(144, 238, 144, 0.2); } /* Family Zone */
-        #parkGrid tr:nth-child(n+6) td:nth-child(-n+5) { background: rgba(255, 182, 193, 0.2); } /* Food Zone */
-        #parkGrid tr:nth-child(n+6) td:nth-child(n+6) { background: rgba(135, 206, 235, 0.2); } /* Access Zone */
+        #parkGrid tr:nth-child(-n+5) td:nth-child(-n+5) { background: rgba(255, 99, 71, 0.2); }
+        #parkGrid tr:nth-child(-n+5) td:nth-child(n+6) { background: rgba(144, 238, 144, 0.2); }
+        #parkGrid tr:nth-child(n+6) td:nth-child(-n+5) { background: rgba(255, 182, 193, 0.2); }
+        #parkGrid tr:nth-child(n+6) td:nth-child(n+6) { background: rgba(135, 206, 235, 0.2); }
         #menu, #advertise, #upgrades {
             display: flex;
             flex-wrap: wrap;
@@ -126,7 +126,7 @@
             border-radius: 10px;
             width: 100%;
             max-width: 800px;
-            margin-top: 20px; /* Extra spacing from grid */
+            margin-top: 20px;
         }
         #menu > div {
             background: rgba(240, 248, 255, 0.8);
@@ -174,7 +174,6 @@
         #cancel:hover {
             background: linear-gradient(135deg, #ff4500, #ff0000);
         }
-        /* Modal Styles */
         #modal {
             display: none;
             position: fixed;
@@ -272,6 +271,7 @@
                 <button onclick="build('restrooms')">Restrooms ($800)</button>
                 <button onclick="build('firstaid')">First Aid Station ($1200)</button>
                 <button onclick="build('benches')">Benches ($500)</button>
+                <button onclick="build('path')">Path ($200)</button>
             </div>
         </div>
         <div id="advertise">
@@ -283,7 +283,6 @@
             <button id="cancel" onclick="cancelItem()">Cancel Item</button>
         </div>
     </div>
-    <!-- Modal Structure -->
     <div id="modal">
         <div id="modal-content">
             <button id="modal-close">X</button>
@@ -293,7 +292,6 @@
     </div>
 
     <script>
-        // Game state
         let game = {
             money: 10000,
             visitors: 0,
@@ -305,7 +303,6 @@
             loans: []
         };
 
-        // Attraction definitions
         const attractionTypes = {
             rollercoaster: { cost: 5000, maintenance: 100, incomePerVisitor: 10, capacity: 20, accessibilityBoost: 1 },
             ferriswheel: { cost: 3000, maintenance: 50, incomePerVisitor: 5, capacity: 30, accessibilityBoost: 1 },
@@ -320,10 +317,10 @@
             parkinglot: { cost: 2000, maintenance: 40, incomePerVisitor: 0, capacity: 0, accessibilityBoost: 1.3 },
             restrooms: { cost: 800, maintenance: 15, incomePerVisitor: 0, capacity: 0, accessibilityBoost: 1, satisfactionBonus: 2 },
             firstaid: { cost: 1200, maintenance: 25, incomePerVisitor: 0, capacity: 0, accessibilityBoost: 1, satisfactionBonus: 3 },
-            benches: { cost: 500, maintenance: 10, incomePerVisitor: 0, capacity: 0, accessibilityBoost: 1, satisfactionBonus: 1 }
+            benches: { cost: 500, maintenance: 10, incomePerVisitor: 0, capacity: 0, accessibilityBoost: 1, satisfactionBonus: 1 },
+            path: { cost: 200, maintenance: 5, incomePerVisitor: 0, capacity: 0, accessibilityBoost: 1.1, satisfactionBonus: 1 }
         };
 
-        // Upgrade definitions
         const upgrades = {
             rollercoaster: {
                 thrill: { cost: 3000, effect: (stats) => ({ ...stats, incomePerVisitor: stats.incomePerVisitor * 1.5 }) },
@@ -371,21 +368,18 @@
             }
         };
 
-        // Advertisement definitions with duration
         const ads = {
             flyers: { cost: 500, boost: 5, duration: 3 },
             billboard: { cost: 1500, boost: 15, duration: 5 },
             tvad: { cost: 3000, boost: 30, duration: 7 }
         };
 
-        // Loan definitions
         const loanOptions = {
             small: { amount: 5000, interest: 0.10, term: 5 },
             medium: { amount: 10000, interest: 0.10, term: 5 },
             large: { amount: 20000, interest: 0.10, term: 5 }
         };
 
-        // Attractiveness values
         function getAttractiveness(type) {
             switch(type) {
                 case 'rollercoaster': return 10;
@@ -402,11 +396,11 @@
                 case 'restrooms': return 1;
                 case 'firstaid': return 1;
                 case 'benches': return 1;
+                case 'path': return 1;
                 default: return 0;
             }
         }
 
-        // Icons for attractions and transportation
         function getColor(type) {
             switch(type) {
                 case 'rollercoaster': return '🎢';
@@ -423,11 +417,11 @@
                 case 'restrooms': return '🚻';
                 case 'firstaid': return '🏥';
                 case 'benches': return '🪑';
+                case 'path': return '🛤️';
                 default: return '';
             }
         }
 
-        // Zone bonuses and details
         function applyZoneBonus(attraction) {
             let { row, col } = attraction.position;
             let type = attraction.type;
@@ -437,21 +431,21 @@
             let bonusDesc = 'None';
             let hasBonus = false;
 
-            if (row < 5 && col < 5) { // Thrill Zone
+            if (row < 5 && col < 5) {
                 zone = 'Thrill Zone';
                 if (['rollercoaster', 'waterride', 'droptower'].includes(type)) {
                     bonus.incomePerVisitor *= 1.5;
                     bonusDesc = 'Income +50%';
                     hasBonus = true;
                 }
-            } else if (row < 5 && col >= 5) { // Family Zone
+            } else if (row < 5 && col >= 5) {
                 zone = 'Family Zone';
                 if (['ferriswheel', 'carousel'].includes(type)) {
                     bonus.capacity *= 1.5;
                     bonusDesc = 'Capacity +50%';
                     hasBonus = true;
                 }
-            } else if (row >= 5 && col < 5) { // Food Zone
+            } else if (row >= 5 && col < 5) {
                 zone = 'Food Zone';
                 if (['foodstall', 'restaurant', 'souvenir'].includes(type)) {
                     bonus.incomePerVisitor *= 1.25;
@@ -459,7 +453,7 @@
                     bonusDesc = 'Income +25%, Capacity +25%';
                     hasBonus = true;
                 }
-            } else if (row >= 5 && col >= 5) { // Access Zone
+            } else if (row >= 5 && col >= 5) {
                 zone = 'Access Zone';
                 if (['busstation', 'trainstation', 'parkinglot'].includes(type)) {
                     bonus.accessibilityBoost *= 1.2;
@@ -470,12 +464,44 @@
             return { stats: bonus, zone, bonusDesc, hasBonus };
         }
 
-        // Grid to track occupied cells
+        function applyPathBonus(attraction) {
+            let { row, col } = attraction.position;
+            let type = attraction.type;
+            let baseStats = attraction.upgradedStats || attractionTypes[type];
+            let bonusStats = { ...baseStats };
+            let hasPathBonus = false;
+            
+            const pathBenefitingTypes = [
+                'rollercoaster', 'ferriswheel', 'carousel', 'waterride', 'droptower',
+                'foodstall', 'restaurant', 'souvenir'
+            ];
+            
+            if (pathBenefitingTypes.includes(type)) {
+                const adjacentCells = [
+                    { r: row - 1, c: col },
+                    { r: row + 1, c: col },
+                    { r: row, c: col - 1 },
+                    { r: row, c: col + 1 }
+                ];
+                
+                for (let cell of adjacentCells) {
+                    if (cell.r >= 0 && cell.r < 10 && cell.c >= 0 && cell.c < 10) {
+                        if (grid[cell.r][cell.c] && grid[cell.r][cell.c].type === 'path') {
+                            bonusStats.incomePerVisitor *= 1.2;
+                            hasPathBonus = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            return { stats: bonusStats, hasPathBonus };
+        }
+
         let grid = Array(10).fill().map(() => Array(10).fill(null));
         let selectedCell = null;
         let selectedAttraction = null;
 
-        // Modal functions
         function showModal(title, content, buttons = []) {
             document.getElementById('modal-title').textContent = title;
             const modalBody = document.getElementById('modal-body');
@@ -495,7 +521,6 @@
 
         document.getElementById('modal-close').addEventListener('click', closeModal);
 
-        // Loan system
         document.getElementById('takeLoan').addEventListener('click', function() {
             const activeLoans = game.loans.length;
             if (activeLoans >= 3) {
@@ -520,7 +545,6 @@
             showModal('Loan Taken', `You borrowed $${loan.amount}.\nTotal repayment: $${totalRepayment}\nDaily repayment: $${dailyRepayment} for ${loan.term} days.`);
         }
 
-        // Initialize the park grid
         function initializeGrid() {
             let parkGrid = document.getElementById('parkGrid');
             parkGrid.innerHTML = '';
@@ -533,16 +557,15 @@
                     cell.style.height = '50px';
                     if (grid[i][j]) {
                         let bonusInfo = applyZoneBonus(grid[i][j]);
-                        cell.textContent = getColor(grid[i][j].type) + (bonusInfo.hasBonus ? '★' : '');
+                        let pathInfo = applyPathBonus(grid[i][j]);
+                        cell.textContent = getColor(grid[i][j].type) + (bonusInfo.hasBonus || pathInfo.hasPathBonus ? '★' : '');
                     }
                 }
             }
         }
 
-        // Call grid initialization immediately
         initializeGrid();
 
-        // Cell selection with details in modal
         document.getElementById('parkGrid').addEventListener('click', function(event) {
             if (event.target.tagName === 'TD') {
                 let row = event.target.parentNode.rowIndex;
@@ -560,12 +583,16 @@
                 updateUpgrades();
 
                 if (selectedAttraction) {
-                    let stats = applyZoneBonus(selectedAttraction).stats;
-                    let zone = applyZoneBonus(selectedAttraction).zone;
-                    let bonusDesc = applyZoneBonus(selectedAttraction).bonusDesc;
+                    let zoneInfo = applyZoneBonus(selectedAttraction);
+                    let pathInfo = applyPathBonus(selectedAttraction);
+                    let stats = pathInfo.stats;
+                    let zone = zoneInfo.zone;
+                    let bonusDesc = zoneInfo.bonusDesc;
+                    let pathBonusDesc = pathInfo.hasPathBonus ? 'Income +20% (Near Path)' : 'None';
                     let details = `Item: ${selectedAttraction.type}\n` +
                                   `Zone: ${zone}\n` +
-                                  `Bonus: ${bonusDesc}\n` +
+                                  `Zone Bonus: ${bonusDesc}\n` +
+                                  `Path Bonus: ${pathBonusDesc}\n` +
                                   `Income per Visitor: $${stats.incomePerVisitor.toFixed(2)}\n` +
                                   `Maintenance: $${stats.maintenance}\n` +
                                   `Capacity: ${Math.floor(stats.capacity)}\n` +
@@ -576,7 +603,6 @@
             }
         });
 
-        // Build an attraction or transportation
         function build(type) {
             if (!selectedCell) {
                 showModal('Error', 'Please select a cell first!');
@@ -606,8 +632,9 @@
             game.money -= attractionTypes[type].cost;
 
             let cell = document.getElementById(`cell-${selectedCell.row}-${selectedCell.col}`);
-            let bonusInfo = applyZoneBonus(attraction);
-            cell.textContent = getColor(type) + (bonusInfo.hasBonus ? '★' : '');
+            let zoneBonusInfo = applyZoneBonus(attraction);
+            let pathBonusInfo = applyPathBonus(attraction);
+            cell.textContent = getColor(type) + (zoneBonusInfo.hasBonus || pathBonusInfo.hasPathBonus ? '★' : '');
             cell.style.backgroundColor = '';
             cell.style.transform = 'scale(1.1)';
             setTimeout(() => cell.style.transform = 'scale(1)', 200);
@@ -615,7 +642,6 @@
             selectedCell = null;
         }
 
-        // Cancel an item
         function cancelItem() {
             if (!selectedCell || !selectedAttraction) {
                 showModal('Error', 'Please select an item to cancel!');
@@ -640,7 +666,6 @@
             updateUpgrades();
         }
 
-        // Advertisement function with duration
         function advertise(type) {
             if (game.money < ads[type].cost) {
                 showModal('Error', 'Not enough money for this ad!');
@@ -654,7 +679,6 @@
             showModal('Advertisement', `Advertisement placed! ${type} boosts reputation by ${ads[type].boost} for ${ads[type].duration} days.`);
         }
 
-        // Update upgrades UI
         function updateUpgrades() {
             let upgradesDiv = document.getElementById('upgrades');
             upgradesDiv.innerHTML = '<button id="cancel" onclick="cancelItem()">Cancel Item</button>';
@@ -681,7 +705,6 @@
             }
         }
 
-        // Apply upgrade
         function applyUpgrade(type, upgrade) {
             if (!selectedCell || !selectedAttraction || selectedAttraction.type !== type) {
                 showModal('Error', 'Select the correct attraction first!');
@@ -698,7 +721,8 @@
             document.getElementById('money').textContent = Math.floor(game.money);
             let cell = document.getElementById(`cell-${selectedCell.row}-${selectedCell.col}`);
             let bonusInfo = applyZoneBonus(selectedAttraction);
-            cell.textContent = getColor(type) + (bonusInfo.hasBonus ? '★' : '');
+            let pathInfo = applyPathBonus(selectedAttraction);
+            cell.textContent = getColor(type) + (bonusInfo.hasBonus || pathInfo.hasPathBonus ? '★' : '');
             updateUpgrades();
             let label = upgrade === 'thrill' ? 'Thrill Upgrade' :
                         upgrade === 'capacity' ? 'Capacity Upgrade' :
@@ -710,25 +734,30 @@
             showModal('Upgrade Applied', `${label} applied to ${type}!`);
         }
 
-        // Format date for display
         function formatDate(date) {
             const options = { year: 'numeric', month: 'long', day: 'numeric' };
             return date.toLocaleDateString('en-US', options);
         }
 
-        // End turn logic with loan repayment
         document.getElementById('endTurn').addEventListener('click', function() {
             let attractiveness = game.attractions.reduce((sum, a) => sum + getAttractiveness(a.type), 0);
             let accessibility = game.attractions.reduce((prod, a) => prod * applyZoneBonus(a).stats.accessibilityBoost, 1);
             let visitors = Math.floor(attractiveness * 10 * (game.satisfaction / 100) * (game.reputation / 100) * (0.8 + Math.random() * 0.4) * accessibility);
-            let totalCapacity = game.attractions.reduce((sum, a) => sum + applyZoneBonus(a).stats.capacity, 0);
-            let weightedIncome = game.attractions.reduce((sum, a) => sum + applyZoneBonus(a).stats.capacity * applyZoneBonus(a).stats.incomePerVisitor, 0);
+            let totalCapacity = game.attractions.reduce((sum, a) => {
+                let zoneStats = applyZoneBonus(a).stats;
+                let pathStats = applyPathBonus({ ...a, upgradedStats: zoneStats }).stats;
+                return sum + pathStats.capacity;
+            }, 0);
+            let weightedIncome = game.attractions.reduce((sum, a) => {
+                let zoneStats = applyZoneBonus(a).stats;
+                let pathStats = applyPathBonus({ ...a, upgradedStats: zoneStats }).stats;
+                return sum + pathStats.capacity * pathStats.incomePerVisitor;
+            }, 0);
             let expectedIncomePerVisitor = totalCapacity > 0 ? weightedIncome / totalCapacity : 0;
             let servedVisitors = Math.min(visitors, totalCapacity);
             let income = servedVisitors * expectedIncomePerVisitor;
             let totalMaintenance = game.attractions.reduce((sum, a) => sum + applyZoneBonus(a).stats.maintenance, 0);
 
-            // Loan repayment
             let loanRepayment = 0;
             let loanReport = '';
             game.loans = game.loans.map(loan => {
@@ -742,7 +771,6 @@
             }).filter(loan => loan !== null);
             game.money += income - totalMaintenance - loanRepayment;
 
-            // Satisfaction update with facility bonuses
             let satisfactionChange;
             if (visitors > 0) {
                 let ratio = servedVisitors / visitors;
@@ -753,7 +781,6 @@
             let facilityBonus = game.attractions.reduce((sum, a) => sum + (attractionTypes[a.type].satisfactionBonus || 0), 0);
             game.satisfaction = Math.max(0, Math.min(100, game.satisfaction + satisfactionChange + facilityBonus));
 
-            // Reputation update with ad expiration
             let reputationChange = visitors > 100 ? 5 : visitors >= 50 ? 2 : -3;
             let adReport = '';
             game.ads = game.ads.map(ad => {
@@ -769,10 +796,8 @@
             if (adReport) showModal('Ad Expiration', adReport);
             if (loanReport) showModal('Loan Update', loanReport);
 
-            // Date update
             game.date.setDate(game.date.getDate() + 1);
 
-            // Update UI
             document.getElementById('money').textContent = Math.floor(game.money);
             document.getElementById('date').textContent = formatDate(game.date);
             document.getElementById('visitors').textContent = visitors;
@@ -784,7 +809,6 @@
             showModal('Day Summary', summary);
         });
 
-        // Initial date display
         document.getElementById('date').textContent = formatDate(game.date);
     </script>
 </body>
