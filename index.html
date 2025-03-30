@@ -6,7 +6,7 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Amatic+SC:wght@700&display=swap');
         body {
-            background: linear-gradient(to bottom, rgba(0, 191, 255, 0.8), rgba(255, 215, 0, 0.8)), url('https://images.unsplash.com/photo-1622902046580-2b47f567fc30?auto=format&fit=crop&w=1350&q=80') no-repeat center/cover;
+            background: linear-gradient(to bottom, #87ceeb, #98fb98), url('https://images.unsplash.com/photo-1622902046580-2b47f567fc30?auto=format&fit=crop&w=1350&q=80') no-repeat center/cover;
             margin: 0;
             min-height: 100vh;
             display: flex;
@@ -92,72 +92,82 @@
             position: relative;
             width: 800px;
             height: 600px;
-            background: #e0e0e0;
-            border: 4px solid #666;
-            border-radius: 10px;
+            background: linear-gradient(to bottom, #87ceeb 20%, #98fb98 80%);
+            border: 4px solid #4a2c0f;
+            border-radius: 15px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
             overflow: hidden;
-            background-image: linear-gradient(to bottom, #87ceeb, #98fb98); /* Simple park-like gradient */
+            /* Decorative paths */
+            background-image:
+                linear-gradient(to bottom, #87ceeb 20%, #98fb98 80%),
+                radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.5) 10%, transparent 30%),
+                linear-gradient(45deg, transparent 45%, #d2b48c 45%, #d2b48c 55%, transparent 55%);
         }
         .zone {
             position: absolute;
-            border: 2px dashed #333;
-            border-radius: 10px;
-            padding: 10px;
+            border: 2px dashed #4a2c0f;
+            border-radius: 15px;
+            padding: 15px;
             cursor: pointer;
             transition: transform 0.2s, box-shadow 0.2s;
-            background: rgba(255, 255, 255, 0.5);
+            background: rgba(255, 255, 255, 0.7);
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
         }
         .zone:hover {
-            transform: scale(1.05);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            transform: scale(1.03);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
         }
         #thrillZone {
-            top: 10px;
-            left: 10px;
-            width: 380px;
-            height: 280px;
-            background: rgba(255, 99, 71, 0.3);
+            top: 20px;
+            left: 20px;
+            width: 360px;
+            height: 260px;
+            background: linear-gradient(135deg, rgba(255, 99, 71, 0.4), rgba(255, 165, 0, 0.4));
         }
         #familyZone {
-            top: 10px;
-            right: 10px;
-            width: 380px;
-            height: 280px;
-            background: rgba(144, 238, 144, 0.3);
+            top: 20px;
+            right: 20px;
+            width: 360px;
+            height: 260px;
+            background: linear-gradient(135deg, rgba(144, 238, 144, 0.4), rgba(173, 255, 47, 0.4));
         }
         #foodZone {
-            bottom: 10px;
-            left: 10px;
-            width: 380px;
-            height: 280px;
-            background: rgba(255, 182, 193, 0.3);
+            bottom: 20px;
+            left: 20px;
+            width: 360px;
+            height: 260px;
+            background: linear-gradient(135deg, rgba(255, 182, 193, 0.4), rgba(255, 105, 180, 0.4));
         }
         #accessZone {
-            bottom: 10px;
-            right: 10px;
-            width: 380px;
-            height: 280px;
-            background: rgba(135, 206, 235, 0.3);
+            bottom: 20px;
+            right: 20px;
+            width: 360px;
+            height: 260px;
+            background: linear-gradient(135deg, rgba(135, 206, 235, 0.4), rgba(0, 191, 255, 0.4));
         }
         .zone h3 {
             margin: 0 0 10px;
             color: #ff4500;
             font-family: 'Amatic SC', cursive;
-            font-size: 24px;
+            font-size: 28px;
             text-shadow: 1px 1px 2px #fff;
         }
         .zone-items {
             display: flex;
             flex-wrap: wrap;
-            gap: 10px;
-            font-size: 24px;
-            max-height: 230px;
+            gap: 12px;
+            font-size: 28px;
+            max-height: 200px;
             overflow-y: auto;
+            padding: 5px;
         }
         .zone-item {
             cursor: pointer;
-            padding: 2px 5px;
-            border-radius: 5px;
+            padding: 4px 8px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.8);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: background 0.2s;
         }
         .zone-item:hover {
             background: rgba(255, 255, 0, 0.7);
@@ -592,10 +602,10 @@
             const zone = event.target.closest('.zone');
             if (zone) {
                 if (selectedZone) {
-                    selectedZone.style.backgroundColor = zone.id === selectedZone.id ? 'rgba(255, 255, 0, 0.7)' : '';
+                    selectedZone.style.background = zone.id === selectedZone.id ? 'rgba(255, 255, 0, 0.7)' : '';
                 }
                 selectedZone = zone;
-                zone.style.backgroundColor = 'rgba(255, 255, 0, 0.7)';
+                zone.style.background = 'rgba(255, 255, 0, 0.7)';
                 const zoneItems = zone.querySelector('.zone-items');
                 if (event.target.className === 'zone-item') {
                     const index = parseInt(event.target.dataset.index);
@@ -658,7 +668,7 @@
 
             game.attractions = game.attractions.filter(a => a !== selectedAttraction);
             updateMap();
-            if (selectedZone) selectedZone.style.backgroundColor = '';
+            if (selectedZone) selectedZone.style.background = '';
             document.getElementById('money').textContent = Math.floor(game.money);
 
             showModal('Cancellation', `Cancelled ${type}. Refunded $${refund}.`);
